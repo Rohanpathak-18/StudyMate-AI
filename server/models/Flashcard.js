@@ -1,22 +1,22 @@
 const mongoose = require("mongoose");
 
-const cardSchema = new mongoose.Schema(
-  {
-    front: {
-      type: String,
-      required: true,
-    },
+const cardSchema =
+  new mongoose.Schema(
+    {
+      front: {
+        type: String,
+        required: true,
+      },
 
-    back: {
-      type: String,
-      required: true,
+      back: {
+        type: String,
+        required: true,
+      },
     },
-  },
-  {
-    _id: false,
-  }
-);
-
+    {
+      _id: false,
+    }
+  );
 
 const flashcardSchema =
   new mongoose.Schema(
@@ -47,7 +47,6 @@ const flashcardSchema =
       timestamps: true,
     }
   );
-
 
 module.exports =
   mongoose.model(

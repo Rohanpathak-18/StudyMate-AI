@@ -2,7 +2,6 @@ const Quiz = require("../models/Quiz");
 const Document = require("../models/Document");
 const ragService = require("../services/ragService");
 
-
 const generateQuiz = async (
   req,
   res,
@@ -13,6 +12,13 @@ const generateQuiz = async (
       documentId,
       count = 5,
     } = req.body;
+
+    if (!documentId) {
+      return res.status(400).json({
+        success: false,
+        message: "Document is required",
+      });
+    }
 
     const document =
       await Document.findOne({
@@ -27,11 +33,31 @@ const generateQuiz = async (
       });
     }
 
+    if (document.status !== "ready") {
+      return res.status(400).json({
+        success: false,
+        message: "Document is not ready",
+      });
+    }
+
     const quiz =
       await ragService.generateQuiz(
-        documentId,
-        Math.min(Math.max(count, 3), 15)
+        Math.min(
+          Math.max(Number(count), 3),
+          10
+        )
       );
+
+    if (
+      !quiz?.questions ||
+      !Array.isArray(
+        quiz.questions
+      )
+    ) {
+      throw new Error(
+        "Invalid quiz returned by AI"
+      );
+    }
 
     const savedQuiz =
       await Quiz.create({
@@ -51,7 +77,6 @@ const generateQuiz = async (
     next(error);
   }
 };
-
 
 const submitQuiz = async (
   req,
@@ -89,8 +114,9 @@ const submitQuiz = async (
     quiz.questions.forEach(
       (question, index) => {
         if (
-          Number(answers[index]) ===
-          question.answer
+          Number(
+            answers[index]
+          ) === question.answer
         ) {
           score += 1;
         }
@@ -107,18 +133,18 @@ const submitQuiz = async (
       score,
       total: quiz.total,
       percentage:
-        quiz.total === 0
-          ? 0
-          : Math.round(
-              (score / quiz.total) * 100
-            ),
+        quiz.total > 0
+          ? Math.round(
+              (score / quiz.total) *
+                100
+            )
+          : 0,
       quiz,
     });
   } catch (error) {
     next(error);
   }
 };
-
 
 const getQuizzes = async (
   req,
@@ -146,7 +172,6 @@ const getQuizzes = async (
     next(error);
   }
 };
-
 
 module.exports = {
   generateQuiz,

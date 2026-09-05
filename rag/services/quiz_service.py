@@ -1,44 +1,44 @@
 import json
 
-from huggingface_hub import InferenceClient
+from services.rag_service import (
+    client,
+    MODEL_NAME,
+)
 
-from services.rag_service import client, MODEL_NAME
-from vectorstore.faiss_store import search_documents
+from vectorstore.faiss_store import (
+    search_documents,
+)
 
 
-def extract_json(text: str):
+def parse_json(text: str):
     text = text.strip()
 
     if text.startswith("```"):
-        text = text.replace(
-            "```json",
-            ""
-        ).replace(
-            "```",
-            ""
-        ).strip()
+        text = (
+            text.replace("```json", "")
+            .replace("```", "")
+            .strip()
+        )
 
     return json.loads(text)
 
 
 def generate_quiz(
-    document_id: str,
-    count: int = 5,
+    count: int = 5
 ):
     if client is None:
         raise ValueError(
-            "HF_TOKEN is missing."
+            "HF_TOKEN is missing from rag/.env"
         )
 
     documents = search_documents(
-        "important concepts definitions facts key ideas",
-        document_id,
-        min(count * 2, 12),
+        "important concepts definitions facts key points",
+        max(count * 2, 8),
     )
 
     if not documents:
         raise ValueError(
-            "No document content found."
+            "No indexed document found. Upload a document first."
         )
 
     context = "\n\n".join(
@@ -47,8 +47,8 @@ def generate_quiz(
     )
 
     prompt = f"""
-Create exactly {count} multiple choice questions
-from the study material below.
+Create exactly {count} multiple-choice questions
+from the study material.
 
 Return ONLY valid JSON.
 
@@ -58,22 +58,24 @@ Format:
   "title": "Study Quiz",
   "questions": [
     {{
-      "question": "...",
+      "question": "Question text",
       "options": [
-        "...",
-        "...",
-        "...",
-        "..."
+        "Option A",
+        "Option B",
+        "Option C",
+        "Option D"
       ],
       "answer": 0,
-      "explanation": "..."
+      "explanation": "Short explanation"
     }}
   ]
 }}
 
-The answer must be the zero-based option index.
+The answer field must be the zero-based
+index of the correct option.
 
-STUDY MATERIAL:
+Study material:
+
 {context}
 """
 
@@ -83,7 +85,7 @@ STUDY MATERIAL:
             {
                 "role": "system",
                 "content":
-                    "You generate accurate educational quizzes."
+                    "You create accurate educational quizzes.",
             },
             {
                 "role": "user",
@@ -94,6 +96,6 @@ STUDY MATERIAL:
         max_tokens=1800,
     )
 
-    return extract_json(
+    return parse_json(
         response.choices[0].message.content
     )

@@ -5,12 +5,16 @@ const useAuthStore = create((set) => ({
   user: null,
   token: localStorage.getItem("token"),
   loading: false,
+  initialized: false,
 
   register: async (userData) => {
     set({ loading: true });
 
     try {
-      const response = await api.post("/auth/register", userData);
+      const response = await api.post(
+        "/auth/register",
+        userData
+      );
 
       const { token, user } = response.data;
 
@@ -48,10 +52,8 @@ const useAuthStore = create((set) => ({
 
       const { token, user } = response.data;
 
-      // Save token
       localStorage.setItem("token", token);
 
-      // Update Zustand
       set({
         user,
         token,
@@ -66,21 +68,30 @@ const useAuthStore = create((set) => ({
     } catch (error) {
       set({ loading: false });
 
-      return {
-        success: false,
-        message:
-          error.response?.data?.message ||
-          "Login failed",
-      };
+      throw error;
     }
   },
 
   getMe: async () => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      set({
+        user: null,
+        token: null,
+        initialized: true,
+      });
+
+      return false;
+    }
+
     try {
       const response = await api.get("/auth/me");
 
       set({
         user: response.data.user,
+        token,
+        initialized: true,
       });
 
       return true;
@@ -90,6 +101,7 @@ const useAuthStore = create((set) => ({
       set({
         user: null,
         token: null,
+        initialized: true,
       });
 
       return false;
@@ -102,6 +114,7 @@ const useAuthStore = create((set) => ({
     set({
       user: null,
       token: null,
+      initialized: true,
     });
   },
 }));

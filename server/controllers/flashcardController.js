@@ -7,59 +7,76 @@ const Document =
 const ragService =
   require("../services/ragService");
 
-
-const generateFlashcards = async (
-  req,
-  res,
-  next
-) => {
-  try {
-    const {
-      documentId,
-      count = 10,
-    } = req.body;
-
-    const document =
-      await Document.findOne({
-        _id: documentId,
-        user: req.user._id,
-      });
-
-    if (!document) {
-      return res.status(404).json({
-        success: false,
-        message: "Document not found",
-      });
-    }
-
-    const cards =
-      await ragService.generateFlashcards(
+const generateFlashcards =
+  async (req, res, next) => {
+    try {
+      const {
         documentId,
-        Math.min(
-          Math.max(count, 3),
-          20
-        )
-      );
+        count = 10,
+      } = req.body;
 
-    const saved =
-      await Flashcard.create({
-        user: req.user._id,
-        document: document._id,
-        title:
-          cards.title ||
-          "Study Flashcards",
-        cards: cards.cards,
+      if (!documentId) {
+        return res.status(400).json({
+          success: false,
+          message: "Document is required",
+        });
+      }
+
+      const document =
+        await Document.findOne({
+          _id: documentId,
+          user: req.user._id,
+        });
+
+      if (!document) {
+        return res.status(404).json({
+          success: false,
+          message: "Document not found",
+        });
+      }
+
+      if (document.status !== "ready") {
+        return res.status(400).json({
+          success: false,
+          message: "Document is not ready",
+        });
+      }
+
+      const cards =
+        await ragService.generateFlashcards(
+          Math.min(
+            Math.max(Number(count), 5),
+            15
+          )
+        );
+
+      if (
+        !cards?.cards ||
+        !Array.isArray(cards.cards)
+      ) {
+        throw new Error(
+          "Invalid flashcards returned by AI"
+        );
+      }
+
+      const saved =
+        await Flashcard.create({
+          user: req.user._id,
+          document: document._id,
+          title:
+            cards.title ||
+            "Study Flashcards",
+          cards: cards.cards,
+        });
+
+      return res.status(201).json({
+        success: true,
+        flashcards: saved,
       });
-
-    return res.status(201).json({
-      success: true,
-      flashcards: saved,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
+    } catch (error) {
+      next(error);
+    }
+  };
 
 const getFlashcards = async (
   req,
@@ -87,7 +104,6 @@ const getFlashcards = async (
     next(error);
   }
 };
-
 
 module.exports = {
   generateFlashcards,

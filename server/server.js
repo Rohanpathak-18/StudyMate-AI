@@ -7,8 +7,11 @@ const errorMiddleware = require("./middleware/errorMiddleware");
 const authRoutes = require("./routes/authRoutes");
 const documentRoutes = require("./routes/documentRoutes");
 const chatRoutes = require("./routes/chatRoutes");
-const quizRoutes = require("./routes/quizRoutes");
-const flashcardRoutes = require("./routes/flashcardRoutes");
+const quizRoutes =
+  require("./routes/quizRoutes");
+
+const flashcardRoutes =
+  require("./routes/flashcardRoutes");
 
 dotenv.config();
 
@@ -42,8 +45,15 @@ app.use("/api/auth", authRoutes);
 app.use("/api/documents", documentRoutes);
 app.use("/api/chat", chatRoutes);
 
-app.use("/api/quizzes", quizRoutes);
-app.use("/api/flashcards", flashcardRoutes);
+app.use(
+  "/api/quizzes",
+  quizRoutes
+);
+
+app.use(
+  "/api/flashcards",
+  flashcardRoutes
+);
 
 // Error handler
 app.use(errorMiddleware);

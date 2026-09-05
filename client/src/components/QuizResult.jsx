@@ -1,4 +1,4 @@
-import { Trophy } from "lucide-react";
+import { Trophy, RotateCcw } from "lucide-react";
 
 const QuizResult = ({
   score,
@@ -6,32 +6,32 @@ const QuizResult = ({
   onRestart,
 }) => {
   const percentage =
-    total === 0
-      ? 0
-      : Math.round(
+    total > 0
+      ? Math.round(
           (score / total) * 100
-        );
+        )
+      : 0;
 
   return (
-    <div className="rounded-2xl border border-[#16324A] bg-[#0B1728] p-10 text-center">
+    <div className="rounded-3xl border border-[#16324A] bg-[#0B1728] p-10 text-center">
       <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#A3FF12]/10">
         <Trophy
-          className="text-[#A3FF12]"
           size={30}
+          className="text-[#A3FF12]"
         />
       </div>
 
-      <h2 className="mt-5 text-2xl font-bold">
+      <h2 className="mt-6 text-2xl font-bold">
         Quiz Complete
       </h2>
 
       <p className="mt-2 text-[#7890A8]">
-        You scored
+        Your score
       </p>
 
-      <p className="mt-3 text-5xl font-bold text-[#00E5FF]">
+      <div className="mt-4 text-5xl font-bold text-[#00E5FF]">
         {score}/{total}
-      </p>
+      </div>
 
       <p className="mt-2 text-sm text-[#7890A8]">
         {percentage}% correct
@@ -39,9 +39,10 @@ const QuizResult = ({
 
       <button
         onClick={onRestart}
-        className="mt-7 rounded-xl bg-[#00E5FF] px-6 py-3 font-bold text-[#07111F]"
+        className="mt-7 inline-flex items-center gap-2 rounded-xl bg-[#00E5FF] px-6 py-3 font-bold text-[#07111F]"
       >
-        Take Another Quiz
+        <RotateCcw size={17} />
+        New Quiz
       </button>
     </div>
   );

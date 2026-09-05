@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
@@ -7,8 +9,6 @@ from vectorstore.faiss_store import (
     search_documents,
 )
 from services.rag_service import generate_answer
-from services.quiz_service import generate_quiz
-from services.flashcard_service import generate_flashcards
 
 
 app = FastAPI(
@@ -19,13 +19,7 @@ app = FastAPI(
 
 class ChatRequest(BaseModel):
     message: str
-    document_id: str
     k: int = 4
-
-
-class GenerateRequest(BaseModel):
-    document_id: str
-    count: int = 5
 
 
 @app.get("/")
@@ -45,19 +39,32 @@ def health_check():
 
 
 @app.post("/api/index-document")
-def index_document(
-    file_path: str,
-    document_id: str,
-):
-    try:
-        print("=================================")
-        print("INDEXING DOCUMENT")
-        print("Document ID:", document_id)
-        print("File path:", file_path)
-        print("=================================")
+def index_document(file_path: str):
 
-        result = process_document(
-            file_path
+    try:
+        file_path = os.path.abspath(file_path)
+
+        print("\n==============================")
+        print("INDEX DOCUMENT")
+        print("Path:", file_path)
+        print("Exists:", os.path.exists(file_path))
+        print("==============================")
+
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(
+                f"Uploaded file does not exist: {file_path}"
+            )
+
+        if not os.path.isfile(file_path):
+            raise ValueError(
+                f"Path is not a file: {file_path}"
+            )
+
+        result = process_document(file_path)
+
+        print(
+            "Characters:",
+            len(result["text"])
         )
 
         print(
@@ -65,41 +72,48 @@ def index_document(
             result["chunk_count"]
         )
 
+        if result["chunk_count"] == 0:
+            raise ValueError(
+                "No chunks were created from the document."
+            )
+
         create_vectorstore(
-            result["chunks"],
-            document_id,
+            result["chunks"]
         )
+
+        print("VECTORSTORE CREATED")
 
         return {
             "success": True,
             "message": "Document indexed successfully",
-            "document_id": document_id,
             "chunk_count": result["chunk_count"],
         }
 
     except Exception as error:
+
+        print("\n!!!!!!!! INDEXING FAILED !!!!!!!!")
         print(
-            "INDEXING ERROR:",
+            type(error).__name__,
+            ":",
             str(error)
         )
+        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n")
 
         raise HTTPException(
             status_code=500,
-            detail=str(error),
+            detail=f"{type(error).__name__}: {str(error)}",
         )
 
 
 @app.get("/api/search")
 def search(
     query: str,
-    document_id: str,
-    k: int = 4,
+    k: int = 4
 ):
     try:
         results = search_documents(
             query,
-            document_id,
-            k,
+            k
         )
 
         return {
@@ -107,8 +121,10 @@ def search(
             "count": len(results),
             "results": [
                 {
-                    "content": document.page_content,
-                    "metadata": document.metadata,
+                    "content":
+                        document.page_content,
+                    "metadata":
+                        document.metadata,
                 }
                 for document in results
             ],
@@ -122,9 +138,8 @@ def search(
 
 
 @app.post("/api/chat")
-def chat(
-    request: ChatRequest
-):
+def chat(request: ChatRequest):
+
     try:
         if not request.message.strip():
             raise HTTPException(
@@ -134,8 +149,7 @@ def chat(
 
         result = generate_answer(
             request.message,
-            request.document_id,
-            request.k,
+            request.k
         )
 
         return {
@@ -148,66 +162,14 @@ def chat(
         raise
 
     except Exception as error:
+
         print(
             "CHAT ERROR:",
+            type(error).__name__,
             str(error)
         )
 
         raise HTTPException(
             status_code=500,
-            detail=str(error),
-        )
-
-
-@app.post("/api/generate-quiz")
-def generate_quiz_endpoint(
-    request: GenerateRequest
-):
-    try:
-        result = generate_quiz(
-            request.document_id,
-            request.count,
-        )
-
-        return {
-            "success": True,
-            "quiz": result,
-        }
-
-    except Exception as error:
-        print(
-            "QUIZ ERROR:",
-            str(error)
-        )
-
-        raise HTTPException(
-            status_code=500,
-            detail=str(error),
-        )
-
-
-@app.post("/api/generate-flashcards")
-def generate_flashcards_endpoint(
-    request: GenerateRequest
-):
-    try:
-        result = generate_flashcards(
-            request.document_id,
-            request.count,
-        )
-
-        return {
-            "success": True,
-            "flashcards": result,
-        }
-
-    except Exception as error:
-        print(
-            "FLASHCARD ERROR:",
-            str(error)
-        )
-
-        raise HTTPException(
-            status_code=500,
-            detail=str(error),
+            detail=f"{type(error).__name__}: {str(error)}",
         )

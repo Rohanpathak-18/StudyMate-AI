@@ -6,11 +6,11 @@ const QuizCard = ({
 }) => {
   return (
     <div className="rounded-2xl border border-[#16324A] bg-[#0B1728] p-6">
-      <p className="text-xs font-bold uppercase tracking-widest text-[#00E5FF]">
+      <span className="text-xs font-bold uppercase tracking-widest text-[#00E5FF]">
         Question {index + 1}
-      </p>
+      </span>
 
-      <h3 className="mt-3 text-lg font-semibold text-[#F1F7FF]">
+      <h3 className="mt-3 text-lg font-semibold leading-7">
         {question.question}
       </h3>
 
@@ -25,7 +25,7 @@ const QuizCard = ({
               }
               className={`w-full rounded-xl border p-4 text-left text-sm transition ${
                 selectedAnswer === optionIndex
-                  ? "border-[#00E5FF] bg-[#00E5FF]/10 text-[#F1F7FF]"
+                  ? "border-[#00E5FF] bg-[#00E5FF]/10 text-white"
                   : "border-[#16324A] bg-[#07111F] text-[#7890A8] hover:border-[#00E5FF]/40"
               }`}
             >

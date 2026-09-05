@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
+import { Sparkles } from "lucide-react";
 import toast from "react-hot-toast";
 
 import api from "../services/api";
 import QuizCard from "../components/QuizCard";
 import QuizResult from "../components/QuizResult";
-
 
 const Quiz = () => {
   const [documents, setDocuments] =
@@ -23,162 +23,176 @@ const Quiz = () => {
     useState(null);
 
   const [loading, setLoading] =
+    useState(true);
+
+  const [generating, setGenerating] =
     useState(false);
 
-
   useEffect(() => {
-    const loadDocuments =
-      async () => {
-        try {
-          const response =
-            await api.get(
-              "/documents"
-            );
-
-          setDocuments(
-            response.data.documents ||
-              []
-          );
-        } catch (error) {
-          toast.error(
-            "Failed to load documents"
-          );
-        }
-      };
-
-    loadDocuments();
-  }, []);
-
-
-  const generateQuiz =
-    async () => {
-      if (!documentId) {
-        toast.error(
-          "Select a document first"
-        );
-        return;
-      }
-
-      setLoading(true);
-
+    const loadDocuments = async () => {
       try {
         const response =
-          await api.post(
-            "/quizzes/generate",
-            {
-              documentId,
-              count: 5,
-            }
+          await api.get("/documents");
+
+        const readyDocuments = (
+          response.data.documents || []
+        ).filter(
+          (document) =>
+            document.status === "ready"
+        );
+
+        setDocuments(readyDocuments);
+
+        if (readyDocuments.length > 0) {
+          setDocumentId(
+            readyDocuments[0]._id
           );
-
-        setQuiz(
-          response.data.quiz
-        );
-
-        setAnswers(
-          new Array(
-            response.data.quiz
-              .questions.length
-          ).fill(null)
-        );
-
-        setResult(null);
+        }
       } catch (error) {
         toast.error(
-          error.response?.data
-            ?.message ||
-            "Failed to generate quiz"
+          error.response?.data?.message ||
+            "Failed to load documents"
         );
       } finally {
         setLoading(false);
       }
     };
 
+    loadDocuments();
+  }, []);
+
+  const generateQuiz = async () => {
+    if (!documentId) {
+      toast.error(
+        "Upload a document first"
+      );
+      return;
+    }
+
+    setGenerating(true);
+
+    try {
+      const response =
+        await api.post(
+          "/quizzes/generate",
+          {
+            documentId,
+            count: 5,
+          }
+        );
+
+      const generatedQuiz =
+        response.data.quiz;
+
+      setQuiz(generatedQuiz);
+
+      setAnswers(
+        new Array(
+          generatedQuiz.questions.length
+        ).fill(null)
+      );
+
+      setResult(null);
+    } catch (error) {
+      console.error(error);
+
+      toast.error(
+        error.response?.data?.message ||
+          error.response?.data?.error ||
+          "Failed to generate quiz"
+      );
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   const selectAnswer = (
     questionIndex,
     optionIndex
   ) => {
     setAnswers((current) => {
-      const updated = [
-        ...current,
-      ];
+      const next = [...current];
 
-      updated[questionIndex] =
+      next[questionIndex] =
         optionIndex;
 
-      return updated;
+      return next;
     });
   };
 
+  const submitQuiz = async () => {
+    if (
+      answers.some(
+        (answer) => answer === null
+      )
+    ) {
+      toast.error(
+        "Please answer every question"
+      );
+      return;
+    }
 
-  const submitQuiz =
-    async () => {
-      if (
-        answers.some(
-          (answer) =>
-            answer === null
-        )
-      ) {
-        toast.error(
-          "Answer all questions first"
+    try {
+      const response =
+        await api.post(
+          "/quizzes/submit",
+          {
+            quizId: quiz._id,
+            answers,
+          }
         );
-        return;
-      }
 
-      try {
-        const response =
-          await api.post(
-            "/quizzes/submit",
-            {
-              quizId: quiz._id,
-              answers,
-            }
-          );
-
-        setResult(response.data);
-      } catch (error) {
-        toast.error(
+      setResult(response.data);
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message ||
           "Failed to submit quiz"
-        );
-      }
-    };
+      );
+    }
+  };
 
+  const restart = () => {
+    setQuiz(null);
+    setAnswers([]);
+    setResult(null);
+  };
 
   if (result) {
     return (
       <div className="min-h-screen bg-[#07111F] p-6 text-[#F1F7FF]">
-        <div className="mx-auto max-w-3xl pt-10">
+        <div className="mx-auto max-w-3xl py-10">
           <QuizResult
             score={result.score}
             total={result.total}
-            onRestart={() =>
-              setQuiz(null)
-            }
+            onRestart={restart}
           />
         </div>
       </div>
     );
   }
 
-
   return (
     <div className="min-h-screen bg-[#07111F] p-6 text-[#F1F7FF]">
       <div className="mx-auto max-w-4xl py-8">
+        <div className="flex items-center gap-2 text-[#A3FF12]">
+          <Sparkles size={16} />
+          <span className="text-xs font-bold uppercase tracking-[0.2em]">
+            AI Practice
+          </span>
+        </div>
 
-        <h1 className="text-3xl font-bold">
+        <h1 className="mt-3 text-3xl font-bold">
           Smart Quiz
         </h1>
 
         <p className="mt-2 text-[#7890A8]">
-          Test yourself using your study material.
+          Generate questions from your study material.
         </p>
 
         {!quiz && (
-          <div className="mt-8 rounded-2xl border border-[#16324A] bg-[#0B1728] p-6">
-
+          <div className="mt-8 rounded-3xl border border-[#16324A] bg-[#0B1728] p-6">
             <label className="text-sm font-semibold">
-              Choose document
+              Study document
             </label>
 
             <select
@@ -188,36 +202,34 @@ const Quiz = () => {
                   e.target.value
                 )
               }
-              className="mt-3 w-full rounded-xl border border-[#16324A] bg-[#07111F] p-3 text-[#F1F7FF] outline-none"
+              disabled={loading}
+              className="mt-3 w-full rounded-xl border border-[#16324A] bg-[#07111F] p-3 outline-none focus:border-[#00E5FF]"
             >
-              <option value="">
-                Select a document
-              </option>
+              {documents.length === 0 && (
+                <option value="">
+                  No ready documents
+                </option>
+              )}
 
-              {documents
-                .filter(
-                  (document) =>
-                    document.status ===
-                    "ready"
-                )
-                .map(
-                  (document) => (
-                    <option
-                      key={document._id}
-                      value={document._id}
-                    >
-                      {document.originalName}
-                    </option>
-                  )
-                )}
+              {documents.map((document) => (
+                <option
+                  key={document._id}
+                  value={document._id}
+                >
+                  {document.originalName}
+                </option>
+              ))}
             </select>
 
             <button
               onClick={generateQuiz}
-              disabled={loading}
-              className="mt-5 rounded-xl bg-[#00E5FF] px-6 py-3 font-bold text-[#07111F] disabled:opacity-40"
+              disabled={
+                generating ||
+                !documentId
+              }
+              className="mt-5 rounded-xl bg-[#A3FF12] px-6 py-3 font-bold text-[#07111F] disabled:cursor-not-allowed disabled:opacity-40"
             >
-              {loading
+              {generating
                 ? "Generating..."
                 : "Generate Quiz"}
             </button>
@@ -235,9 +247,7 @@ const Quiz = () => {
                   selectedAnswer={
                     answers[index]
                   }
-                  onSelect={(
-                    optionIndex
-                  ) =>
+                  onSelect={(optionIndex) =>
                     selectAnswer(
                       index,
                       optionIndex
@@ -249,7 +259,7 @@ const Quiz = () => {
 
             <button
               onClick={submitQuiz}
-              className="w-full rounded-xl bg-[#A3FF12] px-6 py-4 font-bold text-[#07111F]"
+              className="w-full rounded-xl bg-[#00E5FF] px-6 py-4 font-bold text-[#07111F]"
             >
               Submit Quiz
             </button>

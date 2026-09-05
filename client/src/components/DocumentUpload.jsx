@@ -10,23 +10,34 @@ const DocumentUpload = ({ onUpload }) => {
   const [uploading, setUploading] = useState(false);
   const [dragging, setDragging] = useState(false);
 
-  const allowedTypes = [
-    "application/pdf",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-    "text/plain",
+  const allowedExtensions = [
+    ".pdf",
+    ".docx",
+    ".pptx",
+    ".txt",
   ];
 
   const handleFile = (file) => {
     if (!file) return;
 
-    if (!allowedTypes.includes(file.type)) {
-      toast.error("Only PDF, DOCX, PPTX and TXT files are allowed");
+    const extension =
+      "." +
+      file.name
+        .split(".")
+        .pop()
+        .toLowerCase();
+
+    if (!allowedExtensions.includes(extension)) {
+      toast.error(
+        "Only PDF, DOCX, PPTX and TXT files are allowed"
+      );
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      toast.error("File size must be less than 10 MB");
+      toast.error(
+        "File size must be less than 10 MB"
+      );
       return;
     }
 
@@ -34,44 +45,71 @@ const DocumentUpload = ({ onUpload }) => {
   };
 
   const handleInputChange = (event) => {
-    handleFile(event.target.files[0]);
+    handleFile(event.target.files?.[0]);
   };
 
   const handleDrop = (event) => {
     event.preventDefault();
     setDragging(false);
 
-    const file = event.dataTransfer.files[0];
-    handleFile(file);
+    handleFile(
+      event.dataTransfer.files?.[0]
+    );
+  };
+
+  const clearFile = () => {
+    setSelectedFile(null);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const handleUpload = async () => {
-    if (!selectedFile) {
-      toast.error("Please select a document");
+    if (!selectedFile || uploading) {
       return;
     }
 
     const formData = new FormData();
-    formData.append("document", selectedFile);
+
+    formData.append(
+      "document",
+      selectedFile
+    );
 
     setUploading(true);
 
     try {
-      const response = await api.post("/documents/upload", formData);
-
-      toast.success("Document uploaded successfully");
-
-      setSelectedFile(null);
-
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-
-      onUpload?.(response.data.document);
-    } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Document upload failed"
+      const response = await api.post(
+        "/documents/upload",
+        formData
       );
+
+      const document =
+        response.data?.document;
+
+      toast.success(
+        response.data?.message ||
+          "Document uploaded successfully"
+      );
+
+      clearFile();
+
+      if (document) {
+        onUpload?.(document);
+      }
+    } catch (error) {
+      console.error(
+        "DOCUMENT UPLOAD ERROR:",
+        error
+      );
+
+      const message =
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        "Document upload failed";
+
+      toast.error(message);
     } finally {
       setUploading(false);
     }
@@ -84,13 +122,23 @@ const DocumentUpload = ({ onUpload }) => {
           event.preventDefault();
           setDragging(true);
         }}
-        onDragLeave={() => setDragging(false)}
+        onDragLeave={(event) => {
+          event.preventDefault();
+          setDragging(false);
+        }}
         onDrop={handleDrop}
-        onClick={() => fileInputRef.current?.click()}
+        onClick={() =>
+          !uploading &&
+          fileInputRef.current?.click()
+        }
         className={`cursor-pointer rounded-xl border-2 border-dashed p-8 text-center transition ${
           dragging
             ? "border-[#00E5FF] bg-[#00E5FF]/10"
             : "border-[#16324A] hover:border-[#00E5FF]/60"
+        } ${
+          uploading
+            ? "cursor-not-allowed opacity-60"
+            : ""
         }`}
       >
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-[#00E5FF]/10">
@@ -114,6 +162,7 @@ const DocumentUpload = ({ onUpload }) => {
           type="file"
           accept=".pdf,.docx,.pptx,.txt"
           onChange={handleInputChange}
+          disabled={uploading}
           className="hidden"
         />
       </div>
@@ -126,20 +175,23 @@ const DocumentUpload = ({ onUpload }) => {
             </p>
 
             <p className="mt-1 text-xs text-[#7890A8]">
-              {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+              {(
+                selectedFile.size /
+                1024 /
+                1024
+              ).toFixed(2)}{" "}
+              MB
             </p>
           </div>
 
           <button
+            type="button"
+            disabled={uploading}
             onClick={(event) => {
               event.stopPropagation();
-              setSelectedFile(null);
-
-              if (fileInputRef.current) {
-                fileInputRef.current.value = "";
-              }
+              clearFile();
             }}
-            className="ml-4 rounded-lg p-2 text-[#7890A8] transition hover:bg-[#16324A] hover:text-[#F1F7FF]"
+            className="ml-4 rounded-lg p-2 text-[#7890A8] transition hover:bg-[#16324A] hover:text-[#F1F7FF] disabled:opacity-40"
           >
             <X size={18} />
           </button>
@@ -147,16 +199,16 @@ const DocumentUpload = ({ onUpload }) => {
       )}
 
       <button
-        onClick={(event) => {
-          event.stopPropagation();
-          handleUpload();
-        }}
+        type="button"
+        onClick={handleUpload}
         disabled={!selectedFile || uploading}
         className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#00E5FF] px-5 py-3 font-semibold text-[#07111F] transition hover:bg-[#7C3AED] hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
       >
         <Upload size={18} />
 
-        {uploading ? "Uploading..." : "Upload Document"}
+        {uploading
+          ? "Uploading & indexing..."
+          : "Upload Document"}
       </button>
     </div>
   );
