@@ -1,0 +1,7 @@
+JavaScript is a dynamically typed programming language.
+
+React is a JavaScript library used for building user interfaces.
+
+Node.js allows JavaScript to run outside the browser.
+
+MongoDB is a NoSQL database that stores data in documents.
