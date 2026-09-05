@@ -7,48 +7,35 @@ import QuizCard from "../components/QuizCard";
 import QuizResult from "../components/QuizResult";
 
 const Quiz = () => {
-  const [documents, setDocuments] =
-    useState([]);
+  const [documents, setDocuments] = useState([]);
+  const [documentId, setDocumentId] = useState("");
+  const [quiz, setQuiz] = useState(null);
+  const [answers, setAnswers] = useState([]);
+  const [result, setResult] = useState(null);
 
-  const [documentId, setDocumentId] =
-    useState("");
+  const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
 
-  const [quiz, setQuiz] =
-    useState(null);
-
-  const [answers, setAnswers] =
-    useState([]);
-
-  const [result, setResult] =
-    useState(null);
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [generating, setGenerating] =
-    useState(false);
-
+  // Load ready documents
   useEffect(() => {
     const loadDocuments = async () => {
       try {
-        const response =
-          await api.get("/documents");
+        const response = await api.get("/documents");
 
         const readyDocuments = (
-          response.data.documents || []
+          response.data?.documents || []
         ).filter(
-          (document) =>
-            document.status === "ready"
+          (document) => document.status === "ready"
         );
 
         setDocuments(readyDocuments);
 
         if (readyDocuments.length > 0) {
-          setDocumentId(
-            readyDocuments[0]._id
-          );
+          setDocumentId(readyDocuments[0]._id);
         }
       } catch (error) {
+        console.error("DOCUMENT LOAD ERROR:", error);
+
         toast.error(
           error.response?.data?.message ||
             "Failed to load documents"
@@ -61,51 +48,151 @@ const Quiz = () => {
     loadDocuments();
   }, []);
 
+  // Generate quiz
   const generateQuiz = async () => {
     if (!documentId) {
-      toast.error(
-        "Upload a document first"
-      );
+      toast.error("Please select a ready document");
       return;
     }
 
     setGenerating(true);
 
     try {
-      const response =
-        await api.post(
-          "/quizzes/generate",
-          {
-            documentId,
-            count: 5,
-          }
+      const response = await api.post(
+        "/quizzes/generate",
+        {
+          documentId,
+          count: 5,
+        }
+      );
+
+      console.log(
+        "QUIZ API RESPONSE:",
+        response.data
+      );
+
+      let generatedQuiz = response.data?.quiz;
+
+      if (!generatedQuiz) {
+        throw new Error(
+          "Server returned no quiz"
+        );
+      }
+
+      // Sometimes the AI/backend may return JSON as a string
+      if (typeof generatedQuiz === "string") {
+        try {
+          generatedQuiz = JSON.parse(
+            generatedQuiz
+          );
+        } catch (parseError) {
+          console.error(
+            "QUIZ JSON PARSE ERROR:",
+            parseError
+          );
+
+          throw new Error(
+            "AI returned invalid quiz data"
+          );
+        }
+      }
+
+      // If backend returns an array directly
+      if (Array.isArray(generatedQuiz)) {
+        generatedQuiz = {
+          questions: generatedQuiz,
+        };
+      }
+
+      if (
+        !generatedQuiz ||
+        !Array.isArray(
+          generatedQuiz.questions
+        )
+      ) {
+        console.error(
+          "INVALID QUIZ STRUCTURE:",
+          generatedQuiz
         );
 
-      const generatedQuiz =
-        response.data.quiz;
+        throw new Error(
+          "Invalid quiz structure received from server"
+        );
+      }
 
-      setQuiz(generatedQuiz);
+      // Normalize every question so QuizCard
+      // always receives the expected structure
+      const normalizedQuestions =
+        generatedQuiz.questions.map(
+          (question, index) => ({
+            question:
+              question?.question ||
+              `Question ${index + 1}`,
+
+            options: Array.isArray(
+              question?.options
+            )
+              ? question.options
+              : [],
+
+            answer:
+              question?.answer ?? null,
+
+            explanation:
+              question?.explanation || "",
+          })
+        );
+
+      if (
+        normalizedQuestions.length === 0
+      ) {
+        throw new Error(
+          "The generated quiz contains no questions"
+        );
+      }
+
+      const finalQuiz = {
+        ...generatedQuiz,
+        questions: normalizedQuestions,
+      };
+
+      console.log(
+        "FINAL QUIZ:",
+        finalQuiz
+      );
+
+      setQuiz(finalQuiz);
 
       setAnswers(
         new Array(
-          generatedQuiz.questions.length
+          normalizedQuestions.length
         ).fill(null)
       );
 
       setResult(null);
-    } catch (error) {
-      console.error(error);
 
-      toast.error(
-        error.response?.data?.message ||
-          error.response?.data?.error ||
-          "Failed to generate quiz"
+      toast.success(
+        "Quiz generated successfully"
       );
+    } catch (error) {
+      console.error(
+        "QUIZ FRONTEND ERROR:",
+        error
+      );
+
+      const message =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        "Failed to generate quiz";
+
+      toast.error(message);
     } finally {
       setGenerating(false);
     }
   };
 
+  // Select an answer
   const selectAnswer = (
     questionIndex,
     optionIndex
@@ -120,7 +207,15 @@ const Quiz = () => {
     });
   };
 
+  // Submit quiz
   const submitQuiz = async () => {
+    if (!quiz?._id) {
+      toast.error(
+        "Quiz ID is missing"
+      );
+      return;
+    }
+
     if (
       answers.some(
         (answer) => answer === null
@@ -142,21 +237,31 @@ const Quiz = () => {
           }
         );
 
-      setResult(response.data);
+      setResult(
+        response.data
+      );
     } catch (error) {
+      console.error(
+        "QUIZ SUBMIT ERROR:",
+        error
+      );
+
       toast.error(
-        error.response?.data?.message ||
+        error.response?.data
+          ?.message ||
           "Failed to submit quiz"
       );
     }
   };
 
+  // Restart
   const restart = () => {
     setQuiz(null);
     setAnswers([]);
     setResult(null);
   };
 
+  // Result screen
   if (result) {
     return (
       <div className="min-h-screen bg-[#07111F] p-6 text-[#F1F7FF]">
@@ -174,8 +279,11 @@ const Quiz = () => {
   return (
     <div className="min-h-screen bg-[#07111F] p-6 text-[#F1F7FF]">
       <div className="mx-auto max-w-4xl py-8">
+
+        {/* Header */}
         <div className="flex items-center gap-2 text-[#A3FF12]">
           <Sparkles size={16} />
+
           <span className="text-xs font-bold uppercase tracking-[0.2em]">
             AI Practice
           </span>
@@ -186,24 +294,30 @@ const Quiz = () => {
         </h1>
 
         <p className="mt-2 text-[#7890A8]">
-          Generate questions from your study material.
+          Generate questions from your study
+          material.
         </p>
 
+        {/* Document selection */}
         {!quiz && (
           <div className="mt-8 rounded-3xl border border-[#16324A] bg-[#0B1728] p-6">
+
             <label className="text-sm font-semibold">
               Study document
             </label>
 
             <select
               value={documentId}
-              onChange={(e) =>
+              onChange={(event) =>
                 setDocumentId(
-                  e.target.value
+                  event.target.value
                 )
               }
-              disabled={loading}
-              className="mt-3 w-full rounded-xl border border-[#16324A] bg-[#07111F] p-3 outline-none focus:border-[#00E5FF]"
+              disabled={
+                loading ||
+                generating
+              }
+              className="mt-3 w-full rounded-xl border border-[#16324A] bg-[#07111F] p-3 text-[#F1F7FF] outline-none focus:border-[#00E5FF]"
             >
               {documents.length === 0 && (
                 <option value="">
@@ -211,21 +325,27 @@ const Quiz = () => {
                 </option>
               )}
 
-              {documents.map((document) => (
-                <option
-                  key={document._id}
-                  value={document._id}
-                >
-                  {document.originalName}
-                </option>
-              ))}
+              {documents.map(
+                (document) => (
+                  <option
+                    key={document._id}
+                    value={document._id}
+                  >
+                    {
+                      document.originalName
+                    }
+                  </option>
+                )
+              )}
             </select>
 
             <button
+              type="button"
               onClick={generateQuiz}
               disabled={
                 generating ||
-                !documentId
+                !documentId ||
+                loading
               }
               className="mt-5 rounded-xl bg-[#A3FF12] px-6 py-3 font-bold text-[#07111F] disabled:cursor-not-allowed disabled:opacity-40"
             >
@@ -236,8 +356,10 @@ const Quiz = () => {
           </div>
         )}
 
+        {/* Quiz */}
         {quiz && (
           <div className="mt-8 space-y-5">
+
             {quiz.questions.map(
               (question, index) => (
                 <QuizCard
@@ -247,7 +369,9 @@ const Quiz = () => {
                   selectedAnswer={
                     answers[index]
                   }
-                  onSelect={(optionIndex) =>
+                  onSelect={(
+                    optionIndex
+                  ) =>
                     selectAnswer(
                       index,
                       optionIndex
@@ -258,13 +382,24 @@ const Quiz = () => {
             )}
 
             <button
+              type="button"
               onClick={submitQuiz}
               className="w-full rounded-xl bg-[#00E5FF] px-6 py-4 font-bold text-[#07111F]"
             >
               Submit Quiz
             </button>
+
+            <button
+              type="button"
+              onClick={restart}
+              className="w-full rounded-xl border border-[#16324A] px-6 py-3 font-semibold text-[#7890A8] hover:text-white"
+            >
+              Generate Another Quiz
+            </button>
+
           </div>
         )}
+
       </div>
     </div>
   );

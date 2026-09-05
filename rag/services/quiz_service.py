@@ -1,44 +1,67 @@
 import json
+import re
 
-from services.rag_service import (
-    client,
-    MODEL_NAME,
-)
-
-from vectorstore.faiss_store import (
-    search_documents,
-)
+from services.rag_service import client, MODEL_NAME
+from vectorstore.faiss_store import search_documents
 
 
 def parse_json(text: str):
     text = text.strip()
 
-    if text.startswith("```"):
-        text = (
-            text.replace("```json", "")
-            .replace("```", "")
-            .strip()
+    text = re.sub(
+        r"^```(?:json)?\s*",
+        "",
+        text,
+        flags=re.IGNORECASE,
+    )
+
+    text = re.sub(
+        r"\s*```$",
+        "",
+        text,
+        flags=re.IGNORECASE,
+    )
+
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+
+    match = re.search(
+        r"\{[\s\S]*\}",
+        text
+    )
+
+    if not match:
+        raise ValueError(
+            "AI did not return valid JSON."
         )
 
-    return json.loads(text)
+    return json.loads(
+        match.group(0)
+    )
 
 
-def generate_quiz(
-    count: int = 5
-):
+def generate_quiz(count: int = 5):
+
     if client is None:
         raise ValueError(
             "HF_TOKEN is missing from rag/.env"
         )
 
+    count = max(
+        3,
+        min(int(count), 10)
+    )
+
     documents = search_documents(
         "important concepts definitions facts key points",
-        max(count * 2, 8),
+        8
     )
 
     if not documents:
         raise ValueError(
-            "No indexed document found. Upload a document first."
+            "No indexed document found."
         )
 
     context = "\n\n".join(
@@ -48,7 +71,7 @@ def generate_quiz(
 
     prompt = f"""
 Create exactly {count} multiple-choice questions
-from the study material.
+from the following study material.
 
 Return ONLY valid JSON.
 
@@ -71,10 +94,9 @@ Format:
   ]
 }}
 
-The answer field must be the zero-based
-index of the correct option.
+The answer must be a zero-based index from 0 to 3.
 
-Study material:
+STUDY MATERIAL:
 
 {context}
 """
@@ -84,18 +106,25 @@ Study material:
         messages=[
             {
                 "role": "system",
-                "content":
-                    "You create accurate educational quizzes.",
+                "content": (
+                    "You create accurate educational quizzes. "
+                    "Return JSON only."
+                ),
             },
             {
                 "role": "user",
                 "content": prompt,
             },
         ],
-        temperature=0.3,
+        temperature=0.2,
         max_tokens=1800,
     )
 
-    return parse_json(
-        response.choices[0].message.content
-    )
+    content = response.choices[0].message.content
+
+    if not content:
+        raise ValueError(
+            "AI returned an empty quiz response."
+        )
+
+    return parse_json(content)

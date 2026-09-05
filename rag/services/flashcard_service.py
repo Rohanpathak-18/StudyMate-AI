@@ -1,44 +1,67 @@
 import json
+import re
 
-from services.rag_service import (
-    client,
-    MODEL_NAME,
-)
-
-from vectorstore.faiss_store import (
-    search_documents,
-)
+from services.rag_service import client, MODEL_NAME
+from vectorstore.faiss_store import search_documents
 
 
 def parse_json(text: str):
     text = text.strip()
 
-    if text.startswith("```"):
-        text = (
-            text.replace("```json", "")
-            .replace("```", "")
-            .strip()
+    text = re.sub(
+        r"^```(?:json)?\s*",
+        "",
+        text,
+        flags=re.IGNORECASE,
+    )
+
+    text = re.sub(
+        r"\s*```$",
+        "",
+        text,
+        flags=re.IGNORECASE,
+    )
+
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+
+    match = re.search(
+        r"\{[\s\S]*\}",
+        text
+    )
+
+    if not match:
+        raise ValueError(
+            "AI did not return valid JSON."
         )
 
-    return json.loads(text)
+    return json.loads(
+        match.group(0)
+    )
 
 
-def generate_flashcards(
-    count: int = 10
-):
+def generate_flashcards(count: int = 10):
+
     if client is None:
         raise ValueError(
             "HF_TOKEN is missing from rag/.env"
         )
 
+    count = max(
+        5,
+        min(int(count), 15)
+    )
+
     documents = search_documents(
-        "important concepts definitions formulas facts",
-        max(count * 2, 10),
+        "important concepts definitions formulas facts key points",
+        10
     )
 
     if not documents:
         raise ValueError(
-            "No indexed document found. Upload a document first."
+            "No indexed document found."
         )
 
     context = "\n\n".join(
@@ -47,7 +70,8 @@ def generate_flashcards(
     )
 
     prompt = f"""
-Create exactly {count} useful study flashcards.
+Create exactly {count} useful study flashcards
+from the following study material.
 
 Return ONLY valid JSON.
 
@@ -63,7 +87,7 @@ Format:
   ]
 }}
 
-Study material:
+STUDY MATERIAL:
 
 {context}
 """
@@ -73,18 +97,26 @@ Study material:
         messages=[
             {
                 "role": "system",
-                "content":
-                    "You create concise educational flashcards.",
+                "content": (
+                    "You create concise and accurate "
+                    "educational flashcards. "
+                    "Return JSON only."
+                ),
             },
             {
                 "role": "user",
                 "content": prompt,
             },
         ],
-        temperature=0.3,
+        temperature=0.2,
         max_tokens=1800,
     )
 
-    return parse_json(
-        response.choices[0].message.content
-    )
+    content = response.choices[0].message.content
+
+    if not content:
+        raise ValueError(
+            "AI returned an empty flashcard response."
+        )
+
+    return parse_json(content)

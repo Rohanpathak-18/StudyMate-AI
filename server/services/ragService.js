@@ -4,14 +4,10 @@ const RAG_URL =
   process.env.RAG_URL ||
   "http://127.0.0.1:8000";
 
+
 const indexDocument = async (
   filePath
 ) => {
-  console.log(
-    "Sending document to RAG:",
-    filePath
-  );
-
   const response =
     await axios.post(
       `${RAG_URL}/api/index-document`,
@@ -27,25 +23,96 @@ const indexDocument = async (
   return response.data;
 };
 
+
 const askQuestion = async (
   message
 ) => {
-  const response =
-    await axios.post(
-      `${RAG_URL}/api/chat`,
-      {
-        message,
-        k: 4,
-      },
-      {
-        timeout: 300000,
-      }
+  try {
+    const response =
+      await axios.post(
+        `${RAG_URL}/api/chat`,
+        {
+          message,
+          k: 4,
+        },
+        {
+          timeout: 300000,
+        }
+      );
+
+    return response.data;
+
+    
+  } catch (error) {
+    console.error(
+      "RAG CHAT ERROR:",
+      error.response?.data ||
+        error.message
     );
 
-  return response.data;
+    throw error;
+  }
 };
+
+
+const generateQuiz = async (
+  count = 5
+) => {
+  try {
+    const response =
+      await axios.post(
+        `${RAG_URL}/api/generate-quiz`,
+        {
+          count,
+        },
+        {
+          timeout: 300000,
+        }
+      );
+
+    return response.data.quiz;
+  } catch (error) {
+    console.error(
+      "RAG QUIZ ERROR:",
+      error.response?.data ||
+        error.message
+    );
+
+    throw error;
+  }
+};
+
+
+const generateFlashcards =
+  async (count = 10) => {
+    try {
+      const response =
+        await axios.post(
+          `${RAG_URL}/api/generate-flashcards`,
+          {
+            count,
+          },
+          {
+            timeout: 300000,
+          }
+        );
+
+      return response.data.flashcards;
+    } catch (error) {
+      console.error(
+        "RAG FLASHCARD ERROR:",
+        error.response?.data ||
+          error.message
+      );
+
+      throw error;
+    }
+  };
+
 
 module.exports = {
   indexDocument,
   askQuestion,
+  generateQuiz,
+  generateFlashcards,
 };

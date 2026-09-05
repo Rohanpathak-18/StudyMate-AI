@@ -1,6 +1,7 @@
 const ragService = require("../services/ragService");
+const Conversation = require("../models/Conversation");
 
-const chat = async (req, res, next) => {
+const askQuestion = async (req, res) => {
   try {
     const { message } = req.body;
 
@@ -11,18 +12,24 @@ const chat = async (req, res, next) => {
       });
     }
 
-    const result =
-      await ragService.askQuestion(
-        message.trim()
-      );
+    const result = await ragService.askQuestion(
+      message.trim()
+    );
+
+    const conversation =
+      await Conversation.create({
+        user: req.user._id,
+        question: message.trim(),
+        answer: result.answer,
+      });
 
     return res.status(200).json({
       success: true,
-      answer:
-        result.answer ||
-        "I could not generate an answer.",
+      answer: result.answer,
       sources: result.sources || [],
+      conversation,
     });
+
   } catch (error) {
     console.error(
       "CHAT CONTROLLER ERROR:",
@@ -34,13 +41,12 @@ const chat = async (req, res, next) => {
       success: false,
       message:
         error.response?.data?.detail ||
-        error.response?.data?.message ||
         error.message ||
-        "AI Tutor failed",
+        "Failed to process AI request",
     });
   }
 };
 
 module.exports = {
-  chat,
+  askQuestion,
 };

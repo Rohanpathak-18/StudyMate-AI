@@ -22,6 +22,10 @@ class ChatRequest(BaseModel):
     k: int = 4
 
 
+class GenerateRequest(BaseModel):
+    count: int = 5
+
+
 @app.get("/")
 def root():
     return {
@@ -40,19 +44,19 @@ def health_check():
 
 @app.post("/api/index-document")
 def index_document(file_path: str):
-
     try:
         file_path = os.path.abspath(file_path)
 
-        print("\n==============================")
-        print("INDEX DOCUMENT")
-        print("Path:", file_path)
-        print("Exists:", os.path.exists(file_path))
-        print("==============================")
+        print("\n======================================")
+        print("STUDYMATE AI - DOCUMENT INDEXING")
+        print("======================================")
+        print("File path:", file_path)
+        print("File exists:", os.path.exists(file_path))
+        print("======================================")
 
         if not os.path.exists(file_path):
             raise FileNotFoundError(
-                f"Uploaded file does not exist: {file_path}"
+                f"File not found: {file_path}"
             )
 
         if not os.path.isfile(file_path):
@@ -60,28 +64,36 @@ def index_document(file_path: str):
                 f"Path is not a file: {file_path}"
             )
 
-        result = process_document(file_path)
+        result = process_document(
+            file_path
+        )
 
         print(
-            "Characters:",
+            "Extracted text length:",
             len(result["text"])
         )
 
         print(
-            "Chunks:",
+            "Number of chunks:",
             result["chunk_count"]
         )
 
-        if result["chunk_count"] == 0:
+        if not result["chunks"]:
             raise ValueError(
-                "No chunks were created from the document."
+                "No text chunks were created."
             )
 
         create_vectorstore(
             result["chunks"]
         )
 
-        print("VECTORSTORE CREATED")
+        print(
+            "FAISS vectorstore created successfully."
+        )
+
+        print(
+            "======================================\n"
+        )
 
         return {
             "success": True,
@@ -90,30 +102,42 @@ def index_document(file_path: str):
         }
 
     except Exception as error:
-
-        print("\n!!!!!!!! INDEXING FAILED !!!!!!!!")
+        print("\n======================================")
+        print("DOCUMENT INDEXING FAILED")
         print(
-            type(error).__name__,
-            ":",
+            "Error type:",
+            type(error).__name__
+        )
+        print(
+            "Error:",
             str(error)
         )
-        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n")
+        print("======================================\n")
 
         raise HTTPException(
             status_code=500,
-            detail=f"{type(error).__name__}: {str(error)}",
+            detail=(
+                f"{type(error).__name__}: "
+                f"{str(error)}"
+            ),
         )
 
 
 @app.get("/api/search")
 def search(
     query: str,
-    k: int = 4
+    k: int = 4,
 ):
     try:
+        if not query.strip():
+            raise HTTPException(
+                status_code=400,
+                detail="Search query cannot be empty",
+            )
+
         results = search_documents(
             query,
-            k
+            k,
         )
 
         return {
@@ -130,46 +154,107 @@ def search(
             ],
         }
 
+    except HTTPException:
+        raise
+
     except Exception as error:
+        print(
+            "SEARCH ERROR:",
+            str(error)
+        )
+
         raise HTTPException(
             status_code=500,
             detail=str(error),
         )
 
-
 @app.post("/api/chat")
 def chat(request: ChatRequest):
 
     try:
-        if not request.message.strip():
-            raise HTTPException(
-                status_code=400,
-                detail="Message cannot be empty",
-            )
-
         result = generate_answer(
             request.message,
             request.k
         )
 
-        return {
-            "success": True,
-            "answer": result["answer"],
-            "sources": result["sources"],
-        }
+        return result
 
-    except HTTPException:
-        raise
-
-    except Exception as error:
+    except Exception as e:
 
         print(
             "CHAT ERROR:",
+            type(e).__name__,
+            str(e)
+        )
+
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
+
+@app.post("/api/generate-quiz")
+def generate_quiz(
+    request: GenerateRequest
+):
+    try:
+        from services.quiz_service import (
+            generate_quiz as create_quiz,
+        )
+
+        result = create_quiz(
+            request.count
+        )
+
+        return {
+            "success": True,
+            "quiz": result,
+        }
+
+    except Exception as error:
+        print(
+            "QUIZ ERROR:",
             type(error).__name__,
             str(error)
         )
 
         raise HTTPException(
             status_code=500,
-            detail=f"{type(error).__name__}: {str(error)}",
+            detail=(
+                f"{type(error).__name__}: "
+                f"{str(error)}"
+            ),
+        )
+
+
+@app.post("/api/generate-flashcards")
+def generate_flashcards(
+    request: GenerateRequest
+):
+    try:
+        from services.flashcard_service import (
+            generate_flashcards as create_flashcards,
+        )
+
+        result = create_flashcards(
+            request.count
+        )
+
+        return {
+            "success": True,
+            "flashcards": result,
+        }
+
+    except Exception as error:
+        print(
+            "FLASHCARD ERROR:",
+            type(error).__name__,
+            str(error)
+        )
+
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                f"{type(error).__name__}: "
+                f"{str(error)}"
+            ),
         )

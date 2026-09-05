@@ -1,4 +1,11 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import {
+  Navigate,
+  Route,
+  Routes,
+} from "react-router-dom";
+
+import ProtectedRoute from "./components/ProtectedRoute";
+import AppLayout from "./components/AppLayout";
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -10,40 +17,11 @@ import Flashcards from "./pages/Flashcards";
 import Progress from "./pages/Progress";
 import Profile from "./pages/Profile";
 
-import { useEffect } from "react";
-import useAuthStore from "./store/authStore";
-
-import ProtectedRoute from "./components/ProtectedRoute";
-
-function App() {
-  const token = useAuthStore((state) => state.token);
-  const initialized = useAuthStore(
-    (state) => state.initialized
-  );
-  const getMe = useAuthStore(
-    (state) => state.getMe
-  );
-
-  useEffect(() => {
-    if (token) {
-      getMe();
-    } else {
-      useAuthStore.setState({
-        initialized: true,
-      });
-    }
-  }, [token, getMe]);
-
-  if (!initialized) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#07111F] text-[#00E5FF]">
-        Loading StudyMate AI...
-      </div>
-    );
-  }
-
+const App = () => {
   return (
     <Routes>
+
+      {/* Public pages */}
       <Route
         path="/login"
         element={<Login />}
@@ -54,43 +32,54 @@ function App() {
         element={<Register />}
       />
 
+      {/* Protected pages */}
       <Route element={<ProtectedRoute />}>
+
+        {/* Keep Dashboard completely independent.
+            Its original navbar/design stays untouched. */}
         <Route
           path="/dashboard"
           element={<Dashboard />}
         />
 
-        <Route
-          path="/documents"
-          element={<Documents />}
-        />
+        {/* Sidebar + Navbar layout */}
+        <Route element={<AppLayout />}>
 
-        <Route
-          path="/chat"
-          element={<Chat />}
-        />
+          <Route
+            path="/documents"
+            element={<Documents />}
+          />
 
-        <Route
-          path="/quiz"
-          element={<Quiz />}
-        />
+          <Route
+            path="/chat"
+            element={<Chat />}
+          />
 
-        <Route
-          path="/flashcards"
-          element={<Flashcards />}
-        />
+          <Route
+            path="/quiz"
+            element={<Quiz />}
+          />
 
-        <Route
-          path="/progress"
-          element={<Progress />}
-        />
+          <Route
+            path="/flashcards"
+            element={<Flashcards />}
+          />
 
-        <Route
-          path="/profile"
-          element={<Profile />}
-        />
+          <Route
+            path="/progress"
+            element={<Progress />}
+          />
+
+          <Route
+            path="/profile"
+            element={<Profile />}
+          />
+
+        </Route>
+
       </Route>
 
+      {/* Default */}
       <Route
         path="/"
         element={
@@ -101,6 +90,7 @@ function App() {
         }
       />
 
+      {/* Unknown route */}
       <Route
         path="*"
         element={
@@ -110,8 +100,9 @@ function App() {
           />
         }
       />
+
     </Routes>
   );
-}
+};
 
 export default App;

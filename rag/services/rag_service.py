@@ -3,101 +3,139 @@ import os
 from dotenv import load_dotenv
 from huggingface_hub import InferenceClient
 
-from vectorstore.faiss_store import search_documents
-
-
 load_dotenv()
 
 HF_TOKEN = os.getenv("HF_TOKEN")
-
 MODEL_NAME = os.getenv(
     "LLM_MODEL",
-    "Qwen/Qwen2.5-7B-Instruct"
+    "openai/gpt-oss-20b"
+)
+HF_PROVIDER = os.getenv(
+    "HF_PROVIDER",
+    "together"
 )
 
-client = None
-
-if HF_TOKEN:
-    client = InferenceClient(
-        api_key=HF_TOKEN,
-        provider="auto",
+if not HF_TOKEN:
+    raise ValueError(
+        "HF_TOKEN is missing in rag/.env"
     )
 
+print("====================================")
+print("HF MODEL    :", MODEL_NAME)
+print("HF PROVIDER :", HF_PROVIDER)
+print("====================================")
 
-SYSTEM_PROMPT = """
-You are StudyMate AI, an intelligent study assistant.
-
-Use only the supplied document context.
-
-Rules:
-1. Do not invent information.
-2. Explain clearly and simply.
-3. If the answer is not present in the document,
-   say:
-   "I couldn't find the answer in the uploaded document."
-4. Use bullets or numbered points when useful.
-"""
+client = InferenceClient(
+    api_key=HF_TOKEN,
+    provider=HF_PROVIDER
+)
 
 
-def generate_answer(
-    question: str,
-    document_id: str,
-    k: int = 4,
-):
-    if not question.strip():
-        raise ValueError(
-            "Question cannot be empty"
-        )
+def generate_answer(question, k=4):
 
-    if client is None:
-        raise ValueError(
-            "HF_TOKEN is missing. "
-            "Add HF_TOKEN to rag/.env."
-        )
+    from vectorstore.faiss_store import search_documents
 
+    # Retrieve LangChain Document objects
     documents = search_documents(
         question,
-        document_id,
-        k,
+        k
     )
 
     if not documents:
         return {
+            "success": True,
             "answer": (
-                "I couldn't find relevant information "
-                "in the uploaded document."
+                "I could not find relevant "
+                "information in the uploaded "
+                "documents."
             ),
-            "sources": [],
+            "sources": []
         }
 
+    # Convert Document objects into text
     context_parts = []
+    sources = []
 
-    for index, document in enumerate(
-        documents,
-        start=1
-    ):
-        context_parts.append(
-            f"[Context {index}]\n"
-            f"{document.page_content}"
-        )
+    for index, doc in enumerate(documents):
 
+        if hasattr(doc, "page_content"):
+            content = doc.page_content
+
+            if content and content.strip():
+                context_parts.append(
+                    content.strip()
+                )
+
+            # Collect source metadata safely
+            metadata = getattr(
+                doc,
+                "metadata",
+                {}
+            ) or {}
+
+            source = {
+                "index": index + 1,
+                "source": metadata.get(
+                    "source",
+                    metadata.get(
+                        "file_name",
+                        "Uploaded document"
+                    )
+                )
+            }
+
+            if "page" in metadata:
+                source["page"] = (
+                    metadata["page"]
+                )
+
+            sources.append(source)
+
+        elif isinstance(doc, str):
+
+            if doc.strip():
+                context_parts.append(
+                    doc.strip()
+                )
+
+            sources.append({
+                "index": index + 1,
+                "source": "Uploaded document"
+            })
+
+    # Combine retrieved text
     context = "\n\n".join(
         context_parts
     )
 
-    user_prompt = f"""
-Answer the question using only the context.
+    if not context.strip():
+        return {
+            "success": True,
+            "answer": (
+                "I could not find relevant "
+                "content in the uploaded "
+                "documents."
+            ),
+            "sources": sources
+        }
 
-QUESTION:
-{question}
+    prompt = f"""
+You are StudyMate AI, an AI tutor.
 
-CONTEXT:
+Answer the user's question using ONLY
+the provided study material.
+
+If the answer is not present in the
+material, clearly say that it was not
+found in the uploaded document.
+
+Study material:
 {context}
 
-If the answer is not available in the context,
-say:
+User question:
+{question}
 
-"I couldn't find the answer in the uploaded document."
+Give a clear, accurate and helpful answer.
 """
 
     response = client.chat.completions.create(
@@ -105,26 +143,29 @@ say:
         messages=[
             {
                 "role": "system",
-                "content": SYSTEM_PROMPT,
+                "content": (
+                    "You are a helpful "
+                    "educational AI tutor."
+                )
             },
             {
                 "role": "user",
-                "content": user_prompt,
-            },
+                "content": prompt
+            }
         ],
-        temperature=0.2,
         max_tokens=500,
+        temperature=0.3
     )
 
-    answer = response.choices[0].message.content
+    answer = (
+        response
+        .choices[0]
+        .message
+        .content
+    )
 
     return {
+        "success": True,
         "answer": answer,
-        "sources": [
-            {
-                "content": document.page_content,
-                "metadata": document.metadata,
-            }
-            for document in documents
-        ],
+        "sources": sources
     }

@@ -6,20 +6,29 @@ const authMiddleware =
 const {
   generateFlashcards,
   getFlashcards,
-} = require("../controllers/flashcardController");
+} =
+  require("../controllers/flashcardController");
 
-const router = express.Router();
 
-router.use(authMiddleware);
+const router =
+  express.Router();
+
+
+router.use(
+  authMiddleware
+);
+
 
 router.post(
   "/generate",
   generateFlashcards
 );
 
+
 router.get(
   "/",
   getFlashcards
 );
+
 
 module.exports = router;
