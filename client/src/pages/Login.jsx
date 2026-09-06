@@ -66,16 +66,10 @@ const Login = () => {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#07111F] text-[#F1F7FF]">
-
-      <div className="relative min-h-screen"></div>
-
-        <div className="absolute top-5 right-5 z-50">
+      {/* Theme Switcher */}
+      <div className="fixed right-6 top-6 z-[9999]">
         <ThemeSwitcher />
       </div>
-
-
-      
-
 
       {/* Background */}
       <div className="pointer-events-none fixed inset-0">
@@ -150,6 +144,7 @@ const Login = () => {
                   className="rounded-xl border border-[#16324A] bg-[#0B1728]/50 p-4"
                 >
                   <p className="text-xs font-semibold">{title}</p>
+
                   <p className="mt-1 text-[10px] uppercase tracking-wider text-[#7890A8]">
                     {subtitle}
                   </p>
@@ -256,7 +251,11 @@ const Login = () => {
                     onClick={() => setShowPassword((prev) => !prev)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-[#7890A8] transition hover:text-[#F1F7FF]"
                   >
-                    {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                    {showPassword ? (
+                      <EyeOff size={17} />
+                    ) : (
+                      <Eye size={17} />
+                    )}
                   </button>
                 </div>
               </div>
@@ -289,7 +288,8 @@ const Login = () => {
               <ShieldCheck size={16} className="text-[#A3FF12]" />
 
               <p className="text-[10px] leading-5 text-[#7890A8]">
-                Your learning workspace is protected with secure authentication.
+                Your learning workspace is protected with secure
+                authentication.
               </p>
             </div>
 

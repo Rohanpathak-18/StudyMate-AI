@@ -74,9 +74,8 @@ const Register = () => {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#07111F] text-[#F1F7FF]">
-     <div className="relative min-h-screen"></div>
-
-        <div className="absolute top-5 right-5 z-50">
+      {/* Theme Switcher */}
+      <div className="fixed right-6 top-6 z-[9999]">
         <ThemeSwitcher />
       </div>
 
@@ -281,7 +280,11 @@ const Register = () => {
                     onClick={() => setShowPassword((prev) => !prev)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-[#7890A8] transition hover:text-[#F1F7FF]"
                   >
-                    {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                    {showPassword ? (
+                      <EyeOff size={17} />
+                    ) : (
+                      <Eye size={17} />
+                    )}
                   </button>
                 </div>
               </div>
@@ -311,8 +314,8 @@ const Register = () => {
 
             <div className="mt-6 rounded-xl border border-[#16324A]/70 bg-[#0B1728]/40 px-4 py-3">
               <p className="text-[10px] leading-5 text-[#7890A8]">
-                By creating your account, you get your own personalized learning
-                workspace powered by StudyMate AI.
+                By creating your account, you get your own personalized
+                learning workspace powered by StudyMate AI.
               </p>
             </div>
 
