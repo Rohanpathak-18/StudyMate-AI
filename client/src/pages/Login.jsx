@@ -13,6 +13,7 @@ import {
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import useAuthStore from "../store/authStore";
+import ThemeSwitcher from "../components/ThemeSwitcher";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -65,6 +66,13 @@ const Login = () => {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#07111F] text-[#F1F7FF]">
+
+      
+      <div className="absolute top-5 right-5 z-50">
+        <ThemeSwitcher />
+      </div>
+
+
       {/* Background */}
       <div className="pointer-events-none fixed inset-0">
         <div className="absolute left-[-180px] top-[-180px] h-[500px] w-[500px] rounded-full bg-[#00E5FF]/[0.045] blur-[130px]" />
@@ -117,7 +125,6 @@ const Login = () => {
             <h1 className="text-5xl font-bold leading-[1.08] tracking-tight xl:text-6xl">
               Learn deeper.
               <br />
-
               <span className="bg-gradient-to-r from-[#00E5FF] via-[#8BE9FF] to-[#A3FF12] bg-clip-text text-transparent">
                 Remember longer.
               </span>
@@ -245,11 +252,7 @@ const Login = () => {
                     onClick={() => setShowPassword((prev) => !prev)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-[#7890A8] transition hover:text-[#F1F7FF]"
                   >
-                    {showPassword ? (
-                      <EyeOff size={17} />
-                    ) : (
-                      <Eye size={17} />
-                    )}
+                    {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
                   </button>
                 </div>
               </div>
@@ -282,8 +285,7 @@ const Login = () => {
               <ShieldCheck size={16} className="text-[#A3FF12]" />
 
               <p className="text-[10px] leading-5 text-[#7890A8]">
-                Your learning workspace is protected with secure
-                authentication.
+                Your learning workspace is protected with secure authentication.
               </p>
             </div>
 
