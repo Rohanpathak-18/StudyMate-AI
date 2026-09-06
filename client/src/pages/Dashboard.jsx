@@ -21,6 +21,7 @@ import { useNavigate } from "react-router-dom";
 
 import useAuthStore from "../store/authStore";
 import api from "../services/api";
+import ThemeSwitcher from "../components/ThemeSwitcher";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -55,9 +56,7 @@ const Dashboard = () => {
     try {
       setStatsLoading(true);
 
-      const response = await api.get(
-        "/dashboard/stats"
-      );
+      const response = await api.get("/dashboard/stats");
 
       if (response.data?.success) {
         setStats({
@@ -156,9 +155,7 @@ const Dashboard = () => {
     stats.documents + stats.conversations;
 
   const learningStatus =
-    stats.documents > 0
-      ? "ACTIVE"
-      : "READY";
+    stats.documents > 0 ? "ACTIVE" : "READY";
 
   return (
     <div className="min-h-screen overflow-hidden bg-[#07111F] text-[#F1F7FF]">
@@ -176,16 +173,12 @@ const Dashboard = () => {
       {/* Navbar */}
       <nav className="relative z-20 border-b border-[#16324A]/70 bg-[#07111F]/85 backdrop-blur-2xl">
         <div className="mx-auto flex max-w-[1400px] items-center justify-between px-5 py-4 md:px-8">
-
           <button
             type="button"
-            onClick={() =>
-              navigate("/dashboard")
-            }
+            onClick={() => navigate("/dashboard")}
             className="flex items-center gap-3"
           >
             <div className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-[#00E5FF]/20 bg-[#00E5FF]/[0.07] shadow-[0_0_25px_rgba(0,229,255,0.04)]">
-
               <BrainCircuit
                 size={21}
                 className="text-[#00E5FF]"
@@ -201,7 +194,6 @@ const Dashboard = () => {
                   duration: 2.2,
                   repeat: Infinity,
                 }}
-                className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-[#A3FF12] shadow-[0_0_10px_#A3FF12]"
               />
             </div>
 
@@ -209,7 +201,8 @@ const Dashboard = () => {
               <h1 className="text-sm font-bold tracking-tight md:text-base">
                 StudyMate
                 <span className="text-[#00E5FF]">
-                  {" "}AI
+                  {" "}
+                  AI
                 </span>
               </h1>
 
@@ -220,25 +213,12 @@ const Dashboard = () => {
           </button>
 
           <div className="flex items-center gap-3">
+            {/* Theme selector */}
+            <ThemeSwitcher />
 
-            <div className="hidden items-center gap-2 rounded-full border border-[#16324A] bg-[#0B1728]/80 px-3 py-1.5 sm:flex">
-              <motion.span
-                animate={{
-                  opacity: [0.4, 1, 0.4],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                }}
-                className="h-1.5 w-1.5 rounded-full bg-[#A3FF12] shadow-[0_0_8px_#A3FF12]"
-              />
-
-              <span className="text-[10px] font-semibold uppercase tracking-widest text-[#7890A8]">
-                AI Online
-              </span>
-            </div>
-
+            {/* Logout */}
             <button
+              type="button"
               onClick={handleLogout}
               className="flex items-center gap-2 rounded-xl border border-[#16324A] bg-[#0B1728]/70 px-3 py-2 text-xs font-medium text-[#7890A8] transition hover:border-red-400/30 hover:bg-red-400/5 hover:text-red-300 md:px-4 md:text-sm"
             >
@@ -250,7 +230,6 @@ const Dashboard = () => {
       </nav>
 
       <main className="relative z-10 mx-auto max-w-[1400px] px-5 py-8 md:px-8 md:py-12">
-
         {/* Hero */}
         <motion.section
           initial={{
@@ -280,9 +259,7 @@ const Dashboard = () => {
           <div className="absolute -bottom-32 left-1/3 h-80 w-80 rounded-full bg-[#7C3AED]/10 blur-[110px]" />
 
           <div className="relative grid lg:grid-cols-[1.4fr_0.6fr]">
-
             <div className="p-7 md:p-10 lg:p-12">
-
               <div className="mb-6 flex flex-wrap items-center gap-2">
                 <span className="flex h-7 items-center gap-2 rounded-full border border-[#A3FF12]/20 bg-[#A3FF12]/5 px-3 text-[10px] font-bold uppercase tracking-[0.15em] text-[#A3FF12]">
                   <Activity size={11} />
@@ -297,7 +274,6 @@ const Dashboard = () => {
               </div>
 
               <div className="max-w-3xl">
-
                 <p className="mb-2 text-xs font-medium uppercase tracking-[0.25em] text-[#7890A8]">
                   Your learning workspace
                 </p>
@@ -330,11 +306,9 @@ const Dashboard = () => {
               </div>
 
               <div className="mt-8 flex flex-wrap gap-3">
-
                 <button
-                  onClick={() =>
-                    navigate("/chat")
-                  }
+                  type="button"
+                  onClick={() => navigate("/chat")}
                   className="group flex items-center gap-2 rounded-xl bg-[#00E5FF] px-5 py-3 text-sm font-bold text-[#07111F] transition hover:-translate-y-0.5 hover:shadow-[0_0_30px_rgba(0,229,255,0.22)]"
                 >
                   <MessageCircle size={17} />
@@ -348,6 +322,7 @@ const Dashboard = () => {
                 </button>
 
                 <button
+                  type="button"
                   onClick={() =>
                     navigate("/documents")
                   }
@@ -365,7 +340,6 @@ const Dashboard = () => {
 
             {/* AI Core */}
             <div className="relative hidden min-h-[360px] overflow-hidden border-l border-[#16324A] lg:block">
-
               <div className="absolute left-1/2 top-1/2 h-48 w-48 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#00E5FF]/10 blur-[70px]" />
 
               <motion.div
@@ -448,7 +422,6 @@ const Dashboard = () => {
 
         {/* Stats */}
         <section className="mt-6 grid gap-4 sm:grid-cols-3">
-
           <motion.div
             initial={{
               opacity: 0,
@@ -697,7 +670,6 @@ const Dashboard = () => {
               </div>
 
               <div className="mt-7 grid gap-3 sm:grid-cols-3">
-
                 <button
                   type="button"
                   onClick={() =>
@@ -788,7 +760,6 @@ const Dashboard = () => {
                     Test your understanding
                   </p>
                 </button>
-
               </div>
             </div>
           </div>
@@ -798,7 +769,6 @@ const Dashboard = () => {
 
             <div className="relative">
               <div className="flex items-center justify-between">
-
                 <div>
                   <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-[#7890A8]">
                     Activity index
@@ -825,7 +795,6 @@ const Dashboard = () => {
               </p>
 
               <div className="mt-6 space-y-3">
-
                 <div>
                   <div className="mb-1.5 flex justify-between text-[10px]">
                     <span className="text-[#7890A8]">
@@ -873,7 +842,6 @@ const Dashboard = () => {
                     />
                   </div>
                 </div>
-
               </div>
             </div>
           </div>
@@ -883,7 +851,6 @@ const Dashboard = () => {
         <section className="mt-12">
           <div className="mb-6 flex items-end justify-between">
             <div>
-
               <div className="flex items-center gap-2">
                 <Sparkles
                   size={16}
@@ -906,10 +873,10 @@ const Dashboard = () => {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-
             {features.map(
               (feature, index) => {
                 const Icon = feature.icon;
+
                 const style =
                   accentStyles[
                     feature.accent
@@ -956,7 +923,6 @@ const Dashboard = () => {
 
                       <div className="mt-6">
                         <div className="flex items-center justify-between gap-3">
-
                           <p
                             className={`text-[9px] font-bold uppercase tracking-[0.2em] ${style.text}`}
                           >
@@ -992,7 +958,6 @@ const Dashboard = () => {
                 );
               }
             )}
-
           </div>
         </section>
 
@@ -1014,7 +979,6 @@ const Dashboard = () => {
           <div className="relative flex items-center gap-3">
             <span className="relative flex h-2.5 w-2.5">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#A3FF12] opacity-40" />
-
               <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#A3FF12]" />
             </span>
 

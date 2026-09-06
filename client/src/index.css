@@ -1,6 +1,18 @@
 @import "tailwindcss";
 
 :root {
+  --bg: #07111F;
+  --surface: #0B1728;
+  --border: #16324A;
+  --text: #F1F7FF;
+  --muted: #7890A8;
+  --primary: #00E5FF;
+  --secondary: #7C3AED;
+  --secondaryText: #A78BFA;
+  --accent: #A3FF12;
+  --soft: #8BE9FF;
+  --danger: #FF6B6B;
+
   font-family:
     Inter,
     ui-sans-serif,
@@ -10,8 +22,9 @@
     "Segoe UI",
     sans-serif;
 
-  color: #f8fafc;
-  background: #080b16;
+  color: var(--text);
+  background: var(--bg);
+
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
@@ -27,29 +40,26 @@ body,
   margin: 0;
 }
 
+html {
+  background: var(--bg);
+}
+
 body {
   min-width: 320px;
-  background:
-    radial-gradient(
-      circle at 10% 10%,
-      rgba(99, 102, 241, 0.16),
-      transparent 28%
-    ),
-    radial-gradient(
-      circle at 90% 15%,
-      rgba(34, 211, 238, 0.10),
-      transparent 25%
-    ),
-    radial-gradient(
-      circle at 50% 100%,
-      rgba(139, 92, 246, 0.10),
-      transparent 30%
-    ),
-    #080b16;
+  min-height: 100vh;
+
+  background: var(--bg);
+  color: var(--text);
+
+  transition:
+    background-color 200ms ease,
+    color 200ms ease;
 }
 
 button,
-input {
+input,
+textarea,
+select {
   font: inherit;
 }
 
@@ -57,9 +67,156 @@ button {
   cursor: pointer;
 }
 
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* -------------------------------------------------------
+   GLOBAL THEME OVERRIDES
+   These let your existing Tailwind color classes
+   automatically follow the selected StudyMate theme.
+-------------------------------------------------------- */
+
+/* Backgrounds */
+
+[class*="bg-[#07111F]"] {
+  background-color: var(--bg) !important;
+}
+
+[class*="bg-[#0B1728]"] {
+  background-color: var(--surface) !important;
+}
+
+[class*="bg-[#07111F]/"] {
+  background-color: color-mix(
+    in srgb,
+    var(--bg) 85%,
+    transparent
+  ) !important;
+}
+
+[class*="bg-[#0B1728]/"] {
+  background-color: color-mix(
+    in srgb,
+    var(--surface) 85%,
+    transparent
+  ) !important;
+}
+
+/* Text */
+
+[class*="text-[#F1F7FF]"] {
+  color: var(--text) !important;
+}
+
+[class*="text-[#7890A8]"] {
+  color: var(--muted) !important;
+}
+
+[class*="text-[#00E5FF]"] {
+  color: var(--primary) !important;
+}
+
+[class*="text-[#7C3AED]"] {
+  color: var(--secondary) !important;
+}
+
+[class*="text-[#A78BFA]"] {
+  color: var(--secondaryText) !important;
+}
+
+[class*="text-[#A3FF12]"] {
+  color: var(--accent) !important;
+}
+
+[class*="text-[#8BE9FF]"] {
+  color: var(--soft) !important;
+}
+
+/* Borders */
+
+[class*="border-[#16324A]"] {
+  border-color: var(--border) !important;
+}
+
+[class*="border-[#00E5FF]"] {
+  border-color: color-mix(
+    in srgb,
+    var(--primary) 35%,
+    transparent
+  ) !important;
+}
+
+[class*="border-[#7C3AED]"] {
+  border-color: color-mix(
+    in srgb,
+    var(--secondary) 35%,
+    transparent
+  ) !important;
+}
+
+[class*="border-[#A3FF12]"] {
+  border-color: color-mix(
+    in srgb,
+    var(--accent) 35%,
+    transparent
+  ) !important;
+}
+
+/* Background accent colors */
+
+[class*="bg-[#00E5FF]"] {
+  background-color: var(--primary) !important;
+}
+
+[class*="bg-[#00E5FF]/"] {
+  background-color: color-mix(
+    in srgb,
+    var(--primary) 10%,
+    transparent
+  ) !important;
+}
+
+[class*="bg-[#7C3AED]/"] {
+  background-color: color-mix(
+    in srgb,
+    var(--secondary) 10%,
+    transparent
+  ) !important;
+}
+
+[class*="bg-[#A3FF12]/"] {
+  background-color: color-mix(
+    in srgb,
+    var(--accent) 10%,
+    transparent
+  ) !important;
+}
+
+/* Gradient colors */
+
+[class*="from-[#00E5FF]"] {
+  --tw-gradient-from: var(--primary) !important;
+}
+
+[class*="via-[#8BE9FF]"] {
+  --tw-gradient-via: var(--soft) !important;
+}
+
+[class*="to-[#A3FF12]"] {
+  --tw-gradient-to: var(--accent) !important;
+}
+
+/* Selection */
+
 ::selection {
-  background: rgba(129, 140, 248, 0.35);
-  color: white;
+  background: color-mix(
+    in srgb,
+    var(--primary) 30%,
+    transparent
+  );
+
+  color: var(--text);
 }
 
 /* Scrollbar */
@@ -69,28 +226,36 @@ button {
 }
 
 ::-webkit-scrollbar-track {
-  background: #080b16;
+  background: var(--bg);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #252b45;
+  background: var(--border);
   border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #3b4263;
+  background: var(--muted);
 }
 
-/* Glow utilities */
+/* Existing glow utilities */
 
 .glow-indigo {
   box-shadow:
-    0 0 40px rgba(99, 102, 241, 0.12),
+    0 0 40px color-mix(
+      in srgb,
+      var(--primary) 12%,
+      transparent
+    ),
     0 20px 60px rgba(0, 0, 0, 0.25);
 }
 
 .glow-cyan {
   box-shadow:
-    0 0 40px rgba(34, 211, 238, 0.10),
+    0 0 40px color-mix(
+      in srgb,
+      var(--primary) 10%,
+      transparent
+    ),
     0 20px 60px rgba(0, 0, 0, 0.25);
 }
