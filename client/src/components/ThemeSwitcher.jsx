@@ -1,146 +1,85 @@
-import { Check, Palette } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-
-import {
-  themes,
-  useTheme,
-} from "../context/ThemeContext";
+import { useState } from "react";
+import { Moon, Palette, Sun, X } from "lucide-react";
+import { themes, useTheme } from "../context/ThemeContext";
 
 const ThemeSwitcher = () => {
   const { theme, setTheme } = useTheme();
-
   const [open, setOpen] = useState(false);
 
-  const wrapperRef = useRef(null);
-
-  useEffect(() => {
-    const handleOutsideClick = (event) => {
-      if (
-        wrapperRef.current &&
-        !wrapperRef.current.contains(event.target)
-      ) {
-        setOpen(false);
-      }
-    };
-
-    document.addEventListener(
-      "mousedown",
-      handleOutsideClick
-    );
-
-    return () => {
-      document.removeEventListener(
-        "mousedown",
-        handleOutsideClick
-      );
-    };
-  }, []);
-
   return (
-    <div
-      ref={wrapperRef}
-      className="relative"
-    >
+    <div className="relative z-[9999]">
+      {/* Main button */}
       <button
         type="button"
-        onClick={() =>
-          setOpen((current) => !current)
-        }
+        onClick={() => setOpen(!open)}
+        className="flex h-11 w-11 items-center justify-center rounded-full border transition-all duration-200 hover:scale-105"
+        style={{
+          backgroundColor: "var(--surface)",
+          borderColor: "var(--border)",
+          color: "var(--text)",
+        }}
         aria-label="Change theme"
-        title="Change theme"
-        className="
-          flex h-10 w-10 items-center justify-center
-          rounded-xl
-          border border-[var(--border)]
-          bg-[var(--surface)]
-          text-[var(--muted)]
-          transition
-          hover:border-[var(--primary)]/40
-          hover:text-[var(--text)]
-        "
       >
-        <Palette size={17} />
+        {open ? (
+          <X size={20} />
+        ) : theme === "light" ? (
+          <Sun size={20} />
+        ) : (
+          <Moon size={20} />
+        )}
       </button>
 
+      {/* Theme menu */}
       {open && (
         <div
-          className="
-            absolute right-0 top-12 z-[100]
-            w-48
-            rounded-xl
-            border border-[var(--border)]
-            bg-[var(--surface)]
-            p-2
-            shadow-2xl
-          "
+          className="absolute right-0 top-14 w-52 rounded-xl border p-2 shadow-2xl"
+          style={{
+            backgroundColor: "var(--surface)",
+            borderColor: "var(--border)",
+          }}
         >
-          <p
-            className="
-              px-2 pb-2 pt-1
-              text-[10px]
-              font-semibold
-              uppercase
-              tracking-wider
-              text-[var(--muted)]
-            "
+          <div
+            className="px-3 py-2 text-sm font-semibold"
+            style={{ color: "var(--text)" }}
           >
-            Theme
-          </p>
-
-          <div className="space-y-1">
-            {Object.entries(themes).map(
-              ([key, item]) => {
-                const selected = theme === key;
-
-                return (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => {
-                      setTheme(key);
-                      setOpen(false);
-                    }}
-                    className={`
-                      flex w-full items-center gap-3
-                      rounded-lg
-                      px-2.5 py-2
-                      text-left text-sm
-                      transition
-
-                      ${
-                        selected
-                          ? "bg-[var(--primary)]/10 text-[var(--text)]"
-                          : "text-[var(--muted)] hover:bg-[var(--bg)] hover:text-[var(--text)]"
-                      }
-                    `}
-                  >
-                    <span
-                      className="
-                        h-4 w-4 shrink-0
-                        rounded-full
-                        border border-black/10
-                      "
-                      style={{
-                        backgroundColor:
-                          item.colors.bg,
-                      }}
-                    />
-
-                    <span className="flex-1">
-                      {item.name}
-                    </span>
-
-                    {selected && (
-                      <Check
-                        size={14}
-                        className="text-[var(--primary)]"
-                      />
-                    )}
-                  </button>
-                );
-              }
-            )}
+            Choose Theme
           </div>
+
+          {Object.entries(themes).map(([key, value]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => {
+                setTheme(key);
+                setOpen(false);
+              }}
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition"
+              style={{
+                backgroundColor:
+                  theme === key ? "var(--bg)" : "transparent",
+                color: "var(--text)",
+              }}
+            >
+              <span
+                className="h-3 w-3 rounded-full border"
+                style={{
+                  backgroundColor: value.colors.primary,
+                  borderColor: value.colors.border,
+                }}
+              />
+
+              <span className="text-sm">{value.name}</span>
+
+              {theme === key && (
+                <span
+                  className="ml-auto text-xs font-medium"
+                  style={{ color: "var(--primary)" }}
+                >
+                  ✓
+                </span>
+              )}
+            </button>
+          ))}
         </div>
       )}
     </div>

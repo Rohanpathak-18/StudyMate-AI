@@ -74,7 +74,9 @@ const Register = () => {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#07111F] text-[#F1F7FF]">
-      <div className="absolute top-5 right-5 z-50">
+     <div className="relative min-h-screen"></div>
+
+        <div className="absolute top-5 right-5 z-50">
         <ThemeSwitcher />
       </div>
 
