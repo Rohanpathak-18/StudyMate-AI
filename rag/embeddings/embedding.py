@@ -1,10 +1,13 @@
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.embeddings import FastEmbedEmbeddings
 
 
-MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
+MODEL_NAME = "BAAI/bge-small-en-v1.5"
 
 
 def get_embeddings():
-    return HuggingFaceEmbeddings(
-        model_name=MODEL_NAME
+    return FastEmbedEmbeddings(
+        model_name=MODEL_NAME,
+        threads=2,
+        batch_size=32,
+        parallel=None,
     )

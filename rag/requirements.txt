@@ -8,10 +8,8 @@ langchain-huggingface
 langchain-classic
 langchain-text-splitters
 
-sentence-transformers
+fastembed
 faiss-cpu
-
-torch --index-url https://download.pytorch.org/whl/cpu
 
 pypdf
 python-docx
