@@ -2,7 +2,7 @@ const axios = require("axios");
 
 const RAG_URL =
   process.env.RAG_URL ||
-  "http://127.0.0.1:8000";
+  "https://studymate-rag-dycf.onrender.com";
 
 
 const indexDocument = async (

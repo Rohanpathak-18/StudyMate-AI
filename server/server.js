@@ -37,7 +37,10 @@ connectDB();
 
 app.use(
   cors({
-    origin: "https://studymate-ai-4ne6.onrender.com",
+    origin:[
+    "http://localhost:5173",
+    "https://studymate-ai-4ne6.onrender.com",
+    ],
     credentials: true,
   })
 );
