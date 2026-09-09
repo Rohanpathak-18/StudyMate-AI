@@ -58,8 +58,8 @@ const Documents = () => {
 
   return (
     <div className="min-h-screen bg-[#07111F] text-[#F1F7FF]">
-      <div className="mx-auto max-w-6xl px-6 py-10">
-        <div className="mb-10 flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
+      <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8 lg:py-10">
+        <div className="mb-7 flex flex-col gap-5 sm:mb-10 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="mb-3 flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#00E5FF]/10">
@@ -71,11 +71,11 @@ const Documents = () => {
               </span>
             </div>
 
-            <h1 className="text-3xl font-bold">
+            <h1 className="text-2xl font-bold sm:text-3xl">
               Your Documents
             </h1>
 
-            <p className="mt-2 max-w-2xl text-[#7890A8]">
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-[#7890A8] sm:text-base">
               Upload your study material and use it later for AI-powered
               learning, quizzes, summaries and flashcards.
             </p>
@@ -90,7 +90,7 @@ const Documents = () => {
           </button>
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-[380px_1fr]">
+        <div className="grid w-full gap-6 lg:grid-cols-[360px_minmax(0,1fr)] lg:gap-8">
           <div>
             <DocumentUpload onUpload={handleUpload} />
           </div>

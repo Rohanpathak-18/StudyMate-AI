@@ -67,10 +67,10 @@ const DocumentList = ({ documents, loading, onDelete }) => {
     <div className="space-y-3">
       {documents.map((document) => (
         <div
-          key={document._id}
-          className="flex items-center justify-between rounded-xl border border-[#16324A] bg-[#0B1728] p-4 transition hover:border-[#00E5FF]/40"
-        >
-          <div className="flex min-w-0 items-center gap-4">
+  key={document._id}
+  className="flex min-w-0 items-center justify-between gap-2 rounded-xl border border-[#16324A] bg-[#0B1728] p-3 transition hover:border-[#00E5FF]/40 sm:gap-3 sm:p-4"
+>
+          <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#07111F]">
               {getFileIcon(document.mimeType)}
             </div>
@@ -94,9 +94,7 @@ const DocumentList = ({ documents, loading, onDelete }) => {
 
           <button
             onClick={() => onDelete(document._id)}
-            className="ml-4 rounded-lg p-2 text-[#7890A8] transition hover:bg-red-500/10 hover:text-red-400"
-            title="Delete document"
-          >
+            className="shrink-0 rounded-lg p-2 text-[#7890A8] transition hover:bg-red-500/10 hover:text-red-400">
             <Trash2 size={18} />
           </button>
         </div>

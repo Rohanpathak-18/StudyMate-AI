@@ -116,7 +116,7 @@ const DocumentUpload = ({ onUpload }) => {
   };
 
   return (
-    <div className="rounded-2xl border border-[#16324A] bg-[#0B1728] p-6">
+    <div className="w-full rounded-2xl border border-[#16324A] bg-[#0B1728] p-4 sm:p-6">
       <div
         onDragOver={(event) => {
           event.preventDefault();
@@ -131,7 +131,7 @@ const DocumentUpload = ({ onUpload }) => {
           !uploading &&
           fileInputRef.current?.click()
         }
-        className={`cursor-pointer rounded-xl border-2 border-dashed p-8 text-center transition ${
+        className={`cursor-pointer rounded-xl border-2 border-dashed p-5 sm:p-8 text-center transition ${
           dragging
             ? "border-[#00E5FF] bg-[#00E5FF]/10"
             : "border-[#16324A] hover:border-[#00E5FF]/60"
@@ -145,11 +145,11 @@ const DocumentUpload = ({ onUpload }) => {
           <FileUp className="h-7 w-7 text-[#00E5FF]" />
         </div>
 
-        <h3 className="text-lg font-semibold text-[#F1F7FF]">
+      <h3 className="text-base font-semibold text-[#F1F7FF] sm:text-lg">
           Upload study material
         </h3>
 
-        <p className="mt-2 text-sm text-[#7890A8]">
+        <p className="mt-2 text-sm leading-5 text-[#7890A8]">
           Drag & drop your file here or click to browse
         </p>
 
