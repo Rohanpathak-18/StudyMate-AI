@@ -4,13 +4,19 @@ const path = require("path");
 const Document = require("../models/Document");
 const ragService = require("../services/ragService");
 
+
+
+
 const uploadDocument = async (
   req,
   res,
   next
 ) => {
+
   try {
+
     if (!req.file) {
+
       return res.status(400).json({
         success: false,
         message:
@@ -18,8 +24,10 @@ const uploadDocument = async (
       });
     }
 
+
     const absoluteFilePath =
       path.resolve(req.file.path);
+
 
     console.log(
       "\n========== DOCUMENT UPLOAD =========="
@@ -31,7 +39,7 @@ const uploadDocument = async (
     );
 
     console.log(
-      "Path:",
+      "Local path:",
       absoluteFilePath
     );
 
@@ -51,11 +59,13 @@ const uploadDocument = async (
       "=====================================\n"
     );
 
+
     if (
       !fs.existsSync(
         absoluteFilePath
       )
     ) {
+
       return res.status(500).json({
         success: false,
         message:
@@ -63,45 +73,77 @@ const uploadDocument = async (
       });
     }
 
+
+
     const document =
       await Document.create({
-        user: req.user._id,
+
+        user:
+          req.user._id,
+
         originalName:
           req.file.originalname,
+
         filename:
           req.file.filename,
+
         mimeType:
           req.file.mimetype,
-        size: req.file.size,
+
+        size:
+          req.file.size,
+
         filePath:
           absoluteFilePath,
-        status: "processing",
+
+        status:
+          "processing",
       });
 
+
+   
+
     try {
+
       console.log(
         "Starting RAG indexing..."
       );
 
-      await ragService.indexDocument(
-        absoluteFilePath
-      );
+      const ragResult =
+        await ragService.indexDocument(
+          absoluteFilePath,
+          req.file.originalname,
+          req.file.mimetype
+        );
 
-      document.status = "ready";
+
+      document.status =
+        "ready";
 
       await document.save();
+
 
       console.log(
         "RAG indexing completed successfully"
       );
 
+
       return res.status(201).json({
+
         success: true,
+
         message:
           "Document uploaded and indexed successfully",
+
         document,
+
+        rag:
+          ragResult,
       });
+
+
     } catch (ragError) {
+
       console.error(
         "\n========== RAG FAILED =========="
       );
@@ -115,95 +157,169 @@ const uploadDocument = async (
         "================================\n"
       );
 
-      document.status = "failed";
+
+      document.status =
+        "failed";
 
       await document.save();
 
+
       return res.status(500).json({
+
         success: false,
+
         message:
           "Document uploaded but indexing failed",
+
         error:
           ragError.response?.data?.detail ||
           ragError.response?.data?.message ||
           ragError.message,
+
         document,
       });
     }
+
+
   } catch (error) {
+
     next(error);
   }
 };
+
+
+// ============================================================
+// GET ALL DOCUMENTS
+// ============================================================
 
 const getDocuments = async (
   req,
   res,
   next
 ) => {
+
   try {
+
     const documents =
       await Document.find({
-        user: req.user._id,
+
+        user:
+          req.user._id,
+
       }).sort({
-        createdAt: -1,
+
+        createdAt:
+          -1,
+
       });
 
+
     return res.status(200).json({
+
       success: true,
-      count: documents.length,
+
+      count:
+        documents.length,
+
       documents,
+
     });
+
   } catch (error) {
+
     next(error);
   }
 };
+
+
+// ============================================================
+// GET SINGLE DOCUMENT
+// ============================================================
 
 const getDocument = async (
   req,
   res,
   next
 ) => {
+
   try {
+
     const document =
       await Document.findOne({
-        _id: req.params.id,
-        user: req.user._id,
+
+        _id:
+          req.params.id,
+
+        user:
+          req.user._id,
+
       });
 
+
     if (!document) {
+
       return res.status(404).json({
+
         success: false,
-        message: "Document not found",
+
+        message:
+          "Document not found",
+
       });
     }
 
+
     return res.status(200).json({
+
       success: true,
+
       document,
+
     });
+
   } catch (error) {
+
     next(error);
   }
 };
+
+
+// ============================================================
+// DELETE DOCUMENT
+// ============================================================
 
 const deleteDocument = async (
   req,
   res,
   next
 ) => {
+
   try {
+
     const document =
       await Document.findOne({
-        _id: req.params.id,
-        user: req.user._id,
+
+        _id:
+          req.params.id,
+
+        user:
+          req.user._id,
+
       });
 
+
     if (!document) {
+
       return res.status(404).json({
+
         success: false,
-        message: "Document not found",
+
+        message:
+          "Document not found",
+
       });
     }
+
 
     if (
       document.filePath &&
@@ -211,28 +327,42 @@ const deleteDocument = async (
         document.filePath
       )
     ) {
+
       fs.unlinkSync(
         document.filePath
       );
     }
 
+
     await Document.findByIdAndDelete(
       document._id
     );
 
+
     return res.status(200).json({
+
       success: true,
+
       message:
         "Document deleted successfully",
+
     });
+
   } catch (error) {
+
     next(error);
   }
 };
 
+
 module.exports = {
+
   uploadDocument,
+
   getDocuments,
+
   getDocument,
+
   deleteDocument,
+
 };
