@@ -67,18 +67,20 @@ const DocumentList = ({ documents, loading, onDelete }) => {
     <div className="space-y-3">
       {documents.map((document) => (
         <div
+
   key={document._id}
-  className="flex min-w-0 items-center justify-between gap-2 rounded-xl border border-[#16324A] bg-[#0B1728] p-3 transition hover:border-[#00E5FF]/40 sm:gap-3 sm:p-4"
+  className="flex w-full min-w-0 items-center justify-between gap-2 overflow-hidden rounded-xl border border-[#16324A] bg-[#0B1728] p-3 transition hover:border-[#00E5FF]/40 sm:gap-3 sm:p-4"
 >
+
           <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#07111F]">
               {getFileIcon(document.mimeType)}
             </div>
 
             <div className="min-w-0">
-              <p className="truncate font-medium text-[#F1F7FF]">
-                {document.originalName}
-              </p>
+             <p className="min-w-0 truncate font-medium text-[#F1F7FF]">
+  {document.originalName}
+</p>
 
               <div className="mt-1 flex flex-wrap gap-3 text-xs text-[#7890A8]">
                 <span>{formatSize(document.size)}</span>
