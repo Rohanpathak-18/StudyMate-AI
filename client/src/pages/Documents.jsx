@@ -18,7 +18,7 @@ const Documents = () => {
 
       const fetchedDocuments = response.data.documents || [];
 
-      // Remove duplicate documents by _id
+     
       const uniqueDocuments = Array.from(
         new Map(
           fetchedDocuments.map((document) => [
@@ -47,7 +47,6 @@ const Documents = () => {
     if (!newDocument?._id) return;
 
     setDocuments((current) => {
-      // Don't add the same document twice
       const alreadyExists = current.some(
         (document) => document._id === newDocument._id
       );

@@ -5,7 +5,9 @@ const Document = require("../models/Document");
 const ragService = require("../services/ragService");
 
 
-
+// ============================================================
+// UPLOAD DOCUMENT
+// ============================================================
 
 const uploadDocument = async (
   req,
@@ -13,7 +15,13 @@ const uploadDocument = async (
   next
 ) => {
 
+  let document = null;
+
   try {
+
+    // ----------------------------------------------------------
+    // CHECK FILE
+    // ----------------------------------------------------------
 
     if (!req.file) {
 
@@ -26,11 +34,17 @@ const uploadDocument = async (
 
 
     const absoluteFilePath =
-      path.resolve(req.file.path);
+      path.resolve(
+        req.file.path
+      );
 
 
     console.log(
-      "\n========== DOCUMENT UPLOAD =========="
+      "\n======================================"
+    );
+
+    console.log(
+      "DOCUMENT UPLOAD"
     );
 
     console.log(
@@ -39,7 +53,22 @@ const uploadDocument = async (
     );
 
     console.log(
-      "Local path:",
+      "Filename:",
+      req.file.filename
+    );
+
+    console.log(
+      "MIME:",
+      req.file.mimetype
+    );
+
+    console.log(
+      "Size:",
+      req.file.size
+    );
+
+    console.log(
+      "Path:",
       absoluteFilePath
     );
 
@@ -56,9 +85,13 @@ const uploadDocument = async (
     );
 
     console.log(
-      "=====================================\n"
+      "======================================\n"
     );
 
+
+    // ----------------------------------------------------------
+    // CHECK FILE EXISTS
+    // ----------------------------------------------------------
 
     if (
       !fs.existsSync(
@@ -74,8 +107,11 @@ const uploadDocument = async (
     }
 
 
+    // ----------------------------------------------------------
+    // CREATE DATABASE RECORD
+    // ----------------------------------------------------------
 
-    const document =
+    document =
       await Document.create({
 
         user:
@@ -101,7 +137,15 @@ const uploadDocument = async (
       });
 
 
-   
+    console.log(
+      "Document DB record created:",
+      document._id
+    );
+
+
+    // ----------------------------------------------------------
+    // SEND FILE TO RAG
+    // ----------------------------------------------------------
 
     try {
 
@@ -109,13 +153,21 @@ const uploadDocument = async (
         "Starting RAG indexing..."
       );
 
+
       const ragResult =
         await ragService.indexDocument(
+
           absoluteFilePath,
+
           req.file.originalname,
+
           req.file.mimetype
         );
 
+
+      // --------------------------------------------------------
+      // SUCCESS
+      // --------------------------------------------------------
 
       document.status =
         "ready";
@@ -124,7 +176,7 @@ const uploadDocument = async (
 
 
       console.log(
-        "RAG indexing completed successfully"
+        "RAG indexing completed successfully."
       );
 
 
@@ -145,16 +197,30 @@ const uploadDocument = async (
     } catch (ragError) {
 
       console.error(
-        "\n========== RAG FAILED =========="
+        "\n======================================"
       );
 
       console.error(
-        ragError.response?.data ||
-          ragError.message
+        "RAG INDEXING FAILED"
       );
 
       console.error(
-        "================================\n"
+        "Message:",
+        ragError.message
+      );
+
+      console.error(
+        "Status:",
+        ragError.response?.status
+      );
+
+      console.error(
+        "Response:",
+        ragError.response?.data
+      );
+
+      console.error(
+        "======================================\n"
       );
 
 
@@ -164,24 +230,58 @@ const uploadDocument = async (
       await document.save();
 
 
-      return res.status(500).json({
+      const ragMessage =
+        ragError.response?.data?.detail ||
+        ragError.response?.data?.message ||
+        ragError.response?.data?.error ||
+        ragError.message ||
+        "RAG indexing failed";
+
+
+      return res.status(502).json({
 
         success: false,
 
         message:
-          "Document uploaded but indexing failed",
+          "Document uploaded but RAG indexing failed",
 
         error:
-          ragError.response?.data?.detail ||
-          ragError.response?.data?.message ||
-          ragError.message,
+          ragMessage,
 
         document,
+
       });
     }
 
 
   } catch (error) {
+
+    console.error(
+      "DOCUMENT UPLOAD CONTROLLER ERROR:",
+      error
+    );
+
+
+    // If a document record was created
+    // but another unexpected error happened.
+    if (document) {
+
+      try {
+
+        document.status =
+          "failed";
+
+        await document.save();
+
+      } catch (saveError) {
+
+        console.error(
+          "Failed to update document status:",
+          saveError
+        );
+      }
+    }
+
 
     next(error);
   }
@@ -202,15 +302,11 @@ const getDocuments = async (
 
     const documents =
       await Document.find({
-
         user:
           req.user._id,
-
       }).sort({
-
         createdAt:
           -1,
-
       });
 
 
@@ -222,7 +318,6 @@ const getDocuments = async (
         documents.length,
 
       documents,
-
     });
 
   } catch (error) {
@@ -252,7 +347,6 @@ const getDocument = async (
 
         user:
           req.user._id,
-
       });
 
 
@@ -264,7 +358,6 @@ const getDocument = async (
 
         message:
           "Document not found",
-
       });
     }
 
@@ -274,7 +367,6 @@ const getDocument = async (
       success: true,
 
       document,
-
     });
 
   } catch (error) {
@@ -304,7 +396,6 @@ const deleteDocument = async (
 
         user:
           req.user._id,
-
       });
 
 
@@ -316,11 +407,11 @@ const deleteDocument = async (
 
         message:
           "Document not found",
-
       });
     }
 
 
+    // Delete physical file if it exists.
     if (
       document.filePath &&
       fs.existsSync(
@@ -334,9 +425,7 @@ const deleteDocument = async (
     }
 
 
-    await Document.findByIdAndDelete(
-      document._id
-    );
+    await document.deleteOne();
 
 
     return res.status(200).json({
@@ -345,7 +434,6 @@ const deleteDocument = async (
 
       message:
         "Document deleted successfully",
-
     });
 
   } catch (error) {
@@ -356,13 +444,8 @@ const deleteDocument = async (
 
 
 module.exports = {
-
   uploadDocument,
-
   getDocuments,
-
   getDocument,
-
   deleteDocument,
-
 };

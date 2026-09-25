@@ -3,12 +3,22 @@ import api from "../services/api";
 
 const useAuthStore = create((set) => ({
   user: null,
+
   token: localStorage.getItem("token"),
+
   loading: false,
+
   initialized: false,
 
+
+  // ============================================================
+  // REGISTER
+  // ============================================================
+
   register: async (userData) => {
-    set({ loading: true });
+    set({
+      loading: true,
+    });
 
     try {
       const response = await api.post(
@@ -16,24 +26,44 @@ const useAuthStore = create((set) => ({
         userData
       );
 
-      const { token, user } = response.data;
+      const {
+        token,
+        user,
+      } = response.data;
 
-      localStorage.setItem("token", token);
+      if (!token) {
+        throw new Error(
+          "Registration succeeded but no token was returned."
+        );
+      }
+
+      localStorage.setItem(
+        "token",
+        token
+      );
 
       set({
         user,
         token,
         loading: false,
+        initialized: true,
       });
 
       return {
         success: true,
+        user,
+        token,
       };
+
     } catch (error) {
-      set({ loading: false });
+
+      set({
+        loading: false,
+      });
 
       return {
         success: false,
+
         message:
           error.response?.data?.message ||
           "Registration failed",
@@ -41,8 +71,15 @@ const useAuthStore = create((set) => ({
     }
   },
 
+
+  // ============================================================
+  // LOGIN
+  // ============================================================
+
   login: async (credentials) => {
-    set({ loading: true });
+    set({
+      loading: true,
+    });
 
     try {
       const response = await api.post(
@@ -50,14 +87,27 @@ const useAuthStore = create((set) => ({
         credentials
       );
 
-      const { token, user } = response.data;
+      const {
+        token,
+        user,
+      } = response.data;
 
-      localStorage.setItem("token", token);
+      if (!token) {
+        throw new Error(
+          "Login succeeded but no token was returned."
+        );
+      }
+
+      localStorage.setItem(
+        "token",
+        token
+      );
 
       set({
         user,
         token,
         loading: false,
+        initialized: true,
       });
 
       return {
@@ -65,17 +115,35 @@ const useAuthStore = create((set) => ({
         user,
         token,
       };
-    } catch (error) {
-      set({ loading: false });
 
-      throw error;
+    } catch (error) {
+
+      set({
+        loading: false,
+      });
+
+      return {
+        success: false,
+
+        message:
+          error.response?.data?.message ||
+          "Login failed",
+      };
     }
   },
 
+
+  // ============================================================
+  // GET CURRENT USER
+  // ============================================================
+
   getMe: async () => {
-    const token = localStorage.getItem("token");
+
+    const token =
+      localStorage.getItem("token");
 
     if (!token) {
+
       set({
         user: null,
         token: null,
@@ -86,17 +154,38 @@ const useAuthStore = create((set) => ({
     }
 
     try {
-      const response = await api.get("/auth/me");
+
+      const response =
+        await api.get("/auth/me");
+
+      const user =
+        response.data?.user;
+
+      if (!user) {
+        throw new Error(
+          "Invalid user response"
+        );
+      }
 
       set({
-        user: response.data.user,
+        user,
         token,
         initialized: true,
       });
 
       return true;
+
     } catch (error) {
-      localStorage.removeItem("token");
+
+      console.error(
+        "GET ME ERROR:",
+        error.response?.data ||
+        error.message
+      );
+
+      localStorage.removeItem(
+        "token"
+      );
 
       set({
         user: null,
@@ -108,15 +197,25 @@ const useAuthStore = create((set) => ({
     }
   },
 
+
+  // ============================================================
+  // LOGOUT
+  // ============================================================
+
   logout: () => {
-    localStorage.removeItem("token");
+
+    localStorage.removeItem(
+      "token"
+    );
 
     set({
       user: null,
       token: null,
+      loading: false,
       initialized: true,
     });
   },
 }));
+
 
 export default useAuthStore;
