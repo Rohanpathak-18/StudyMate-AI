@@ -1,4 +1,5 @@
 import { Navigate, Outlet } from "react-router-dom";
+import { useEffect } from "react";
 import useAuthStore from "../store/authStore";
 
 const ProtectedRoute = () => {
@@ -10,16 +11,21 @@ const ProtectedRoute = () => {
     (state) => state.initialized
   );
 
-  // Wait until authentication restoration finishes.
-  if (!initialized) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#07111F] text-[#F1F7FF]">
-        <div className="text-sm text-[#7890A8]">
-          Checking authentication...
-        </div>
-      </div>
-    );
-  }
+  const getMe = useAuthStore(
+    (state) => state.getMe
+  );
+
+
+  useEffect(() => {
+    if (token && !initialized) {
+      getMe();
+    }
+  }, [token, initialized, getMe]);
+
+
+  // ----------------------------------------------------------
+  // No token -> login
+  // ----------------------------------------------------------
 
   if (!token) {
     return (
@@ -29,6 +35,26 @@ const ProtectedRoute = () => {
       />
     );
   }
+
+
+  // ----------------------------------------------------------
+  // Token exists but we haven't verified it yet
+  // ----------------------------------------------------------
+
+  if (!initialized) {
+    return (
+      <div className="min-h-screen bg-[#07111F] flex items-center justify-center">
+        <div className="text-[#00E5FF] text-lg">
+          Checking authentication...
+        </div>
+      </div>
+    );
+  }
+
+
+  // ----------------------------------------------------------
+  // Authenticated
+  // ----------------------------------------------------------
 
   return <Outlet />;
 };
