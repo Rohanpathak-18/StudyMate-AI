@@ -6,13 +6,16 @@ from huggingface_hub import InferenceClient
 load_dotenv()
 
 HF_TOKEN = os.getenv("HF_TOKEN")
+
 MODEL_NAME = os.getenv(
     "LLM_MODEL",
     "openai/gpt-oss-20b"
 )
+
+# Let Hugging Face automatically select an available provider
 HF_PROVIDER = os.getenv(
     "HF_PROVIDER",
-    "together"
+    "auto"
 )
 
 if not HF_TOKEN:
@@ -35,7 +38,6 @@ def generate_answer(question, k=4):
 
     from vectorstore.faiss_store import search_documents
 
-    # Retrieve LangChain Document objects
     documents = search_documents(
         question,
         k
@@ -52,13 +54,13 @@ def generate_answer(question, k=4):
             "sources": []
         }
 
-    # Convert Document objects into text
     context_parts = []
     sources = []
 
     for index, doc in enumerate(documents):
 
         if hasattr(doc, "page_content"):
+
             content = doc.page_content
 
             if content and content.strip():
@@ -66,7 +68,6 @@ def generate_answer(question, k=4):
                     content.strip()
                 )
 
-            # Collect source metadata safely
             metadata = getattr(
                 doc,
                 "metadata",
@@ -85,9 +86,7 @@ def generate_answer(question, k=4):
             }
 
             if "page" in metadata:
-                source["page"] = (
-                    metadata["page"]
-                )
+                source["page"] = metadata["page"]
 
             sources.append(source)
 
@@ -103,7 +102,6 @@ def generate_answer(question, k=4):
                 "source": "Uploaded document"
             })
 
-    # Combine retrieved text
     context = "\n\n".join(
         context_parts
     )
@@ -114,7 +112,7 @@ def generate_answer(question, k=4):
             "answer": (
                 "I could not find relevant "
                 "content in the uploaded "
-                "documents."
+                "document."
             ),
             "sources": sources
         }
