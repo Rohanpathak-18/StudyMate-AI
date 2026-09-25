@@ -2,29 +2,16 @@ const axios = require("axios");
 const fs = require("fs");
 const FormData = require("form-data");
 
-
-// ============================================================
-// RAG BASE URL
-// ============================================================
-
 const getRagUrl = () => {
-
-  const url =
-    process.env.RAG_URL?.trim();
-
+  const url = process.env.RAG_URL?.trim();
 
   if (!url) {
-
     throw new Error(
-      "RAG_URL is not configured. Add RAG_URL to the server environment variables."
+      "RAG_URL is missing from the server environment variables."
     );
   }
 
-
-  return url.replace(
-    /\/+$/,
-    ""
-  );
+  return url.replace(/\/+$/, "");
 };
 
 
@@ -37,68 +24,45 @@ const indexDocument = async (
   originalName,
   mimeType
 ) => {
-
   if (!filePath) {
-
-    throw new Error(
-      "RAG indexing failed: file path is missing."
-    );
+    throw new Error("File path is missing.");
   }
-
 
   if (!fs.existsSync(filePath)) {
-
     throw new Error(
-      `RAG indexing failed: file does not exist: ${filePath}`
+      `File does not exist: ${filePath}`
     );
   }
 
+  const ragUrl = getRagUrl();
 
-  const ragUrl =
-    getRagUrl();
+  const endpoint =
+    `${ragUrl}/api/index-document`;
 
-
+  console.log("");
+  console.log("========================================");
+  console.log("STUDYMATE RAG DEBUG");
+  console.log("========================================");
+  console.log("RAG_URL:", ragUrl);
+  console.log("Endpoint:", endpoint);
+  console.log("File:", originalName);
+  console.log("MIME:", mimeType);
+  console.log("File path:", filePath);
   console.log(
-    "======================================"
+    "File exists:",
+    fs.existsSync(filePath)
   );
-
-  console.log(
-    "RAG INDEXING"
-  );
-
-  console.log(
-    "RAG URL:",
-    ragUrl
-  );
-
-  console.log(
-    "File:",
-    originalName
-  );
-
-  console.log(
-    "Path:",
-    filePath
-  );
-
-  console.log(
-    "======================================"
-  );
+  console.log("========================================");
+  console.log("");
 
 
-  const formData =
-    new FormData();
-
+  const formData = new FormData();
 
   formData.append(
     "file",
-    fs.createReadStream(
-      filePath
-    ),
+    fs.createReadStream(filePath),
     {
-      filename:
-        originalName,
-
+      filename: originalName,
       contentType:
         mimeType ||
         "application/octet-stream",
@@ -107,72 +71,118 @@ const indexDocument = async (
 
 
   try {
+    const response = await axios.post(
+      endpoint,
+      formData,
+      {
+        headers: {
+          ...formData.getHeaders(),
+        },
 
-    const response =
-      await axios.post(
-        `${ragUrl}/api/index-document`,
+        timeout: 300000,
 
-        formData,
+        maxContentLength: Infinity,
 
-        {
-          headers: {
-            ...formData.getHeaders(),
-          },
+        maxBodyLength: Infinity,
 
-          maxContentLength:
-            Infinity,
-
-          maxBodyLength:
-            Infinity,
-
-          timeout:
-            300000,
-        }
-      );
-
-
-    console.log(
-      "RAG INDEX RESPONSE:",
-      response.data
+        validateStatus: () => true,
+      }
     );
 
 
-    return response.data;
+    console.log("");
+    console.log("========================================");
+    console.log("RAG RESPONSE");
+    console.log("========================================");
+    console.log(
+      "Status:",
+      response.status
+    );
+    console.log(
+      "Status text:",
+      response.statusText
+    );
+    console.log(
+      "Response data:",
+      response.data
+    );
+    console.log(
+      "Response headers:",
+      response.headers
+    );
+    console.log("========================================");
+    console.log("");
+
+
+    // --------------------------------------------------------
+    // SUCCESS
+    // --------------------------------------------------------
+
+    if (
+      response.status >= 200 &&
+      response.status < 300
+    ) {
+      return response.data;
+    }
+
+
+    // --------------------------------------------------------
+    // RAG RETURNED AN ERROR
+    // --------------------------------------------------------
+
+    const error = new Error(
+      `RAG returned HTTP ${response.status}`
+    );
+
+    error.response = {
+      status: response.status,
+      statusText: response.statusText,
+      data: response.data,
+      headers: response.headers,
+    };
+
+    throw error;
 
   } catch (error) {
 
+    console.error("");
     console.error(
-      "======================================"
+      "========================================"
     );
-
     console.error(
-      "RAG INDEXING ERROR"
+      "RAG INDEXING FAILED"
     );
-
     console.error(
-      "URL:",
-      `${ragUrl}/api/index-document`
+      "========================================"
     );
-
     console.error(
-      "STATUS:",
-      error.response?.status
+      "Endpoint:",
+      endpoint
     );
-
     console.error(
-      "RESPONSE:",
-      error.response?.data
-    );
-
-    console.error(
-      "MESSAGE:",
+      "Error message:",
       error.message
     );
-
     console.error(
-      "======================================"
+      "Error code:",
+      error.code
     );
-
+    console.error(
+      "HTTP status:",
+      error.response?.status
+    );
+    console.error(
+      "Response body:",
+      error.response?.data
+    );
+    console.error(
+      "Response headers:",
+      error.response?.headers
+    );
+    console.error(
+      "========================================"
+    );
+    console.error("");
 
     throw error;
   }
@@ -183,44 +193,21 @@ const indexDocument = async (
 // CHAT
 // ============================================================
 
-const askQuestion = async (
-  message
-) => {
+const askQuestion = async (message) => {
+  const ragUrl = getRagUrl();
 
-  const ragUrl =
-    getRagUrl();
+  const response = await axios.post(
+    `${ragUrl}/api/chat`,
+    {
+      message,
+      k: 4,
+    },
+    {
+      timeout: 300000,
+    }
+  );
 
-
-  try {
-
-    const response =
-      await axios.post(
-        `${ragUrl}/api/chat`,
-
-        {
-          message,
-          k: 4,
-        },
-
-        {
-          timeout:
-            300000,
-        }
-      );
-
-
-    return response.data;
-
-  } catch (error) {
-
-    console.error(
-      "RAG CHAT ERROR:",
-      error.response?.data ||
-      error.message
-    );
-
-    throw error;
-  }
+  return response.data;
 };
 
 
@@ -228,43 +215,20 @@ const askQuestion = async (
 // QUIZ
 // ============================================================
 
-const generateQuiz = async (
-  count = 5
-) => {
+const generateQuiz = async (count = 5) => {
+  const ragUrl = getRagUrl();
 
-  const ragUrl =
-    getRagUrl();
+  const response = await axios.post(
+    `${ragUrl}/api/generate-quiz`,
+    {
+      count,
+    },
+    {
+      timeout: 300000,
+    }
+  );
 
-
-  try {
-
-    const response =
-      await axios.post(
-        `${ragUrl}/api/generate-quiz`,
-
-        {
-          count,
-        },
-
-        {
-          timeout:
-            300000,
-        }
-      );
-
-
-    return response.data.quiz;
-
-  } catch (error) {
-
-    console.error(
-      "RAG QUIZ ERROR:",
-      error.response?.data ||
-      error.message
-    );
-
-    throw error;
-  }
+  return response.data.quiz;
 };
 
 
@@ -272,43 +236,20 @@ const generateQuiz = async (
 // FLASHCARDS
 // ============================================================
 
-const generateFlashcards = async (
-  count = 10
-) => {
+const generateFlashcards = async (count = 10) => {
+  const ragUrl = getRagUrl();
 
-  const ragUrl =
-    getRagUrl();
+  const response = await axios.post(
+    `${ragUrl}/api/generate-flashcards`,
+    {
+      count,
+    },
+    {
+      timeout: 300000,
+    }
+  );
 
-
-  try {
-
-    const response =
-      await axios.post(
-        `${ragUrl}/api/generate-flashcards`,
-
-        {
-          count,
-        },
-
-        {
-          timeout:
-            300000,
-        }
-      );
-
-
-    return response.data.flashcards;
-
-  } catch (error) {
-
-    console.error(
-      "RAG FLASHCARD ERROR:",
-      error.response?.data ||
-      error.message
-    );
-
-    throw error;
-  }
+  return response.data.flashcards;
 };
 
 
