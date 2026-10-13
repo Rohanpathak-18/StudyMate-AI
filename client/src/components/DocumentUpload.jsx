@@ -189,12 +189,15 @@ const DocumentUpload = ({ onUpload }) => {
 
 
       console.error(
-        "BACKEND RESPONSE:",
-        error.response?.data
+        "BACKEND RESPONSE JSON:",
+        JSON.stringify(error.response?.data ?? null)
       );
 
 
       const responseData = error.response?.data;
+      const retryAfter =
+        error.response?.headers?.get?.("retry-after") ||
+        error.response?.headers?.["retry-after"];
       const backendMessage =
         responseData?.error ||
         responseData?.message ||
@@ -202,6 +205,9 @@ const DocumentUpload = ({ onUpload }) => {
         (typeof responseData === "string" ? responseData : null) ||
         (error.code === "ECONNABORTED"
           ? "Upload timed out while indexing. Check your connection and try again."
+          : null) ||
+        (error.response?.status === 429
+          ? `The upload service is rate limited. Try again${retryAfter ? ` in ${retryAfter} seconds` : " in a minute"}.`
           : null) ||
         (!error.response
           ? "Could not reach the upload server. Check that the API server is running."
