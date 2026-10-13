@@ -524,6 +524,8 @@ Add:
     LLM_MODEL=openai/gpt-oss-20b
     HF_PROVIDER=together
 
+`HF_TOKEN` must be a valid Hugging Face User Access Token with Inference Providers access. If deployed, update the `HF_TOKEN` environment variable in the RAG service's hosting dashboard and restart/redeploy that service. Do not commit the token to this repository.
+
 ---
 
 # ▶️ Running the Application

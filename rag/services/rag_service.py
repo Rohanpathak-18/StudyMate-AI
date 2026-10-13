@@ -1,11 +1,17 @@
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 from huggingface_hub import InferenceClient
 
-load_dotenv()
+load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
-HF_TOKEN = os.getenv("HF_TOKEN")
+HF_TOKEN = (
+    os.getenv("HF_TOKEN")
+    or os.getenv("HUGGINGFACEHUB_API_TOKEN")
+    or os.getenv("HUGGING_FACE_HUB_TOKEN")
+    or ""
+).strip()
 
 MODEL_NAME = os.getenv(
     "LLM_MODEL",
@@ -136,24 +142,47 @@ User question:
 Give a clear, accurate and helpful answer.
 """
 
-    response = client.chat.completions.create(
-        model=MODEL_NAME,
-        messages=[
-            {
-                "role": "system",
-                "content": (
-                    "You are a helpful "
-                    "educational AI tutor."
-                )
-            },
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ],
-        max_tokens=500,
-        temperature=0.3
-    )
+    try:
+        response = client.chat.completions.create(
+            model=MODEL_NAME,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a helpful "
+                        "educational AI tutor."
+                    )
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            max_tokens=500,
+            temperature=0.3
+        )
+    except Exception as error:
+        provider_response = getattr(error, "response", None)
+        status_code = (
+            getattr(provider_response, "status_code", None)
+            or getattr(provider_response, "status", None)
+        )
+
+        if status_code == 401:
+            raise RuntimeError(
+                "Hugging Face rejected the configured API token. Set HF_TOKEN "
+                "to a valid User Access Token with Inference Providers access "
+                "in the RAG service environment, then restart the service."
+            ) from error
+
+        if status_code == 403:
+            raise RuntimeError(
+                "The configured Hugging Face token cannot use Inference Providers. "
+                "Grant Inference Providers access to the token and verify your "
+                "Hugging Face account's provider access."
+            ) from error
+
+        raise
 
     answer = (
         response
