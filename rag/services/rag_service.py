@@ -182,6 +182,15 @@ Give a clear, accurate and helpful answer.
                 "Hugging Face account's provider access."
             ) from error
 
+        if status_code == 402:
+            raise RuntimeError(
+                "Your Hugging Face Inference Providers credits are exhausted. "
+                "Add credits in Hugging Face Billing, wait for the monthly credits "
+                "to renew, or configure a custom provider key in your Hugging Face "
+                "Inference Providers settings. Changing HF_TOKEN alone will not "
+                "restore credits."
+            ) from error
+
         raise
 
     answer = (
