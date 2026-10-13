@@ -48,6 +48,8 @@ const DocumentUpload = ({ onUpload }) => {
       )
     ) {
 
+      setSelectedFile(null);
+
       toast.error(
         "Only PDF, DOCX, PPTX and TXT files are allowed"
       );
@@ -60,6 +62,8 @@ const DocumentUpload = ({ onUpload }) => {
       file.size >
       10 * 1024 * 1024
     ) {
+
+      setSelectedFile(null);
 
       toast.error(
         "File size must be less than 10 MB"
@@ -74,10 +78,10 @@ const DocumentUpload = ({ onUpload }) => {
 
 
   const handleInputChange = (event) => {
-
-    handleFile(
-      event.target.files?.[0]
-    );
+    const file = event.target.files?.[0];
+    handleFile(file);
+    // Let the same file trigger onChange again after a failed validation.
+    event.target.value = "";
   };
 
 
@@ -142,7 +146,7 @@ const DocumentUpload = ({ onUpload }) => {
           "/documents/upload",
           formData,
           {
-            timeout: 300000,
+            timeout: 310000,
           }
         );
 
@@ -190,9 +194,18 @@ const DocumentUpload = ({ onUpload }) => {
       );
 
 
+      const responseData = error.response?.data;
       const backendMessage =
-        error.response?.data?.error ||
-        error.response?.data?.message;
+        responseData?.error ||
+        responseData?.message ||
+        responseData?.detail ||
+        (typeof responseData === "string" ? responseData : null) ||
+        (error.code === "ECONNABORTED"
+          ? "Upload timed out while indexing. Check your connection and try again."
+          : null) ||
+        (!error.response
+          ? "Could not reach the upload server. Check that the API server is running."
+          : null);
 
 
       toast.error(

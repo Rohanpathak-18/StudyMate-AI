@@ -278,6 +278,16 @@ const uploadDocument = async (req, res, next) => {
     console.error("");
 
 
+    // If persistence failed before a document record was created, remove
+    // the uploaded file so it does not become an unreachable orphan.
+    if (!document && req.file?.path && fs.existsSync(req.file.path)) {
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (cleanupError) {
+        console.error("Failed to remove untracked upload:", cleanupError);
+      }
+    }
+
     // ----------------------------------------------------------
     // MARK DOCUMENT FAILED
     // ----------------------------------------------------------

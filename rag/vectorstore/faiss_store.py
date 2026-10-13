@@ -20,15 +20,24 @@ def create_vectorstore(chunks):
 
     embeddings = get_embeddings()
 
-    vectorstore = FAISS.from_texts(
-        texts=chunks,
-        embedding=embeddings
-    )
-
     os.makedirs(
         VECTORSTORE_PATH,
         exist_ok=True
     )
+
+    # Keep earlier uploads searchable when a new document is indexed.
+    if os.path.isfile(os.path.join(VECTORSTORE_PATH, "index.faiss")):
+        vectorstore = FAISS.load_local(
+            VECTORSTORE_PATH,
+            embeddings,
+            allow_dangerous_deserialization=True
+        )
+        vectorstore.add_texts(chunks)
+    else:
+        vectorstore = FAISS.from_texts(
+            texts=chunks,
+            embedding=embeddings
+        )
 
     vectorstore.save_local(
         VECTORSTORE_PATH
