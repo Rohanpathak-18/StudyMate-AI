@@ -1,9 +1,13 @@
 import axios from "axios";
 
+const defaultApiUrl =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1"
+    ? "http://127.0.0.1:5000/api"
+    : "https://studymate-ai-4ne6.onrender.com/api";
+
 const api = axios.create({
-  baseURL:
-    import.meta.env.VITE_API_URL ||
-    "http://127.0.0.1:5000/api",
+  baseURL: import.meta.env.VITE_API_URL || defaultApiUrl,
 
   timeout: 120000,
 });
