@@ -3,7 +3,13 @@ const fs = require("fs");
 const FormData = require("form-data");
 
 const getRagUrl = () => {
-  const url = process.env.RAG_URL?.trim();
+  // Prefer Render's private-network address when configured. Public onrender.com
+  // calls can be subject to inbound rate limits, especially on free services.
+  const url = (
+    process.env.RAG_INTERNAL_URL ||
+    process.env.RAG_URL ||
+    ""
+  ).trim();
 
   if (!url) {
     throw new Error(
@@ -11,7 +17,11 @@ const getRagUrl = () => {
     );
   }
 
-  return url.replace(/\/+$/, "");
+  const normalizedUrl = /^[a-z]+:\/\//i.test(url)
+    ? url
+    : `http://${url}`;
+
+  return normalizedUrl.replace(/\/+$/, "");
 };
 
 

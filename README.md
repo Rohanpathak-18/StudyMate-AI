@@ -512,6 +512,12 @@ Add:
     JWT_SECRET=your_jwt_secret
     RAG_URL=http://127.0.0.1:8000
 
+For Render deployments, set `RAG_INTERNAL_URL` on the API service to the RAG
+service's internal address (from its Dashboard **Connect → Internal** page),
+for example `http://studymate-rag:10000`. The API prefers this address over
+`RAG_URL`. Both services must be in the same Render workspace and region, and
+the RAG service must be on a plan that can receive private-network requests.
+
 ## RAG
 
 Create:

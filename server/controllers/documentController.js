@@ -203,8 +203,14 @@ const uploadDocument = async (req, res, next) => {
       let ragMessage =
         "RAG indexing failed";
 
-
       if (
+        ragStatus === 429 &&
+        typeof ragResponse === "string" &&
+        ragResponse.toLowerCase().includes("too many requests")
+      ) {
+        ragMessage =
+          "The RAG service is rate limiting requests. Configure RAG_INTERNAL_URL with its Render internal address (same region/workspace), then restart the API. Free RAG web services cannot receive private-network traffic.";
+      } else if (
         typeof ragResponse === "string"
       ) {
         ragMessage =
