@@ -524,6 +524,27 @@ for example `http://studymate-rag:10000`. The API prefers this address over
 `RAG_URL`. Both services must be in the same Render workspace and region, and
 the RAG service must be on a plan that can receive private-network requests.
 
+## Free Render deployment (API and RAG in one service)
+
+Render Free web services cannot receive private-network requests from another
+Free web service, and public RAG requests can hit Free inbound rate limits.
+This repository includes a Docker deployment that runs the Node API and FastAPI
+RAG process inside one Free web service. It sends indexing requests to
+`http://127.0.0.1:8000`, stores original uploaded files in MongoDB, and stores
+the FAISS index in MongoDB GridFS so both survive a Render restart.
+
+Create a new Render Web Service from the repository, choose **Docker**, keep the
+root directory at the repository root, and select the **Free** instance plan.
+Copy the current API service's `MONGO_URI` and `JWT_SECRET`, and the current RAG
+service's `HF_TOKEN`, `HF_PROVIDER`, and `LLM_MODEL` into the new service's
+environment. Set `CLIENT_URL` to the deployed frontend origin. The Docker image
+sets `RAG_URL=http://127.0.0.1:8000` and `RAG_LOCAL_ONLY=true` automatically.
+
+After the new service is healthy, set the frontend's `VITE_API_URL` to the new
+service URL ending in `/api`, then rebuild/redeploy the frontend. Keep the old
+services until the new API and document indexing work, then stop the old API
+and RAG services to preserve the workspace's Free instance hours.
+
 ## RAG
 
 Create:

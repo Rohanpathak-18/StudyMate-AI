@@ -31,7 +31,12 @@ const documentSchema = new mongoose.Schema(
 
     filePath: {
       type: String,
-      required: true,
+      default: "",
+    },
+
+    fileData: {
+      type: Buffer,
+      select: false,
     },
 
     status: {
@@ -42,6 +47,12 @@ const documentSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    toJSON: {
+      transform: (document, result) => {
+        delete result.fileData;
+        return result;
+      },
+    },
   }
 );
 

@@ -24,38 +24,23 @@ const uploadDocument = async (req, res, next) => {
       });
     }
 
-    const absoluteFilePath = path.resolve(req.file.path);
+    const filename = `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(req.file.originalname).toLowerCase()}`;
 
     console.log("");
     console.log("======================================");
     console.log("DOCUMENT UPLOAD");
     console.log("======================================");
     console.log("Original:", req.file.originalname);
-    console.log("Filename:", req.file.filename);
+    console.log("Filename:", filename);
     console.log("MIME:", req.file.mimetype);
     console.log("Size:", req.file.size);
-    console.log("Path:", absoluteFilePath);
-    console.log(
-      "Exists:",
-      fs.existsSync(absoluteFilePath)
-    );
+    console.log("Stored in MongoDB for persistence.");
     console.log("User:", req.user._id);
     console.log("======================================");
     console.log("");
 
 
     // ----------------------------------------------------------
-    // CHECK FILE EXISTS
-    // ----------------------------------------------------------
-
-    if (!fs.existsSync(absoluteFilePath)) {
-      return res.status(500).json({
-        success: false,
-        message: "Uploaded file was not found on server",
-      });
-    }
-
-
     // ----------------------------------------------------------
     // CREATE DATABASE RECORD
     // ----------------------------------------------------------
@@ -66,8 +51,7 @@ const uploadDocument = async (req, res, next) => {
       originalName:
         req.file.originalname,
 
-      filename:
-        req.file.filename,
+      filename,
 
       mimeType:
         req.file.mimetype,
@@ -75,8 +59,9 @@ const uploadDocument = async (req, res, next) => {
       size:
         req.file.size,
 
-      filePath:
-        absoluteFilePath,
+      filePath: "",
+
+      fileData: req.file.buffer,
 
       status:
         "processing",
@@ -100,7 +85,7 @@ const uploadDocument = async (req, res, next) => {
 
       const ragResult =
         await ragService.indexDocument(
-          absoluteFilePath,
+          req.file.buffer,
           req.file.originalname,
           req.file.mimetype
         );
@@ -122,7 +107,7 @@ const uploadDocument = async (req, res, next) => {
       return res.status(201).json({
         success: true,
         documentSaved: true,
-        indexingSuccess: false,
+        indexingSuccess: true,
 
         message:
           "Document uploaded and indexed successfully",
@@ -207,7 +192,7 @@ const uploadDocument = async (req, res, next) => {
 
       if (ragStatus === 429) {
         ragMessage =
-          "The RAG service rejected indexing with HTTP 429. The uploaded file is saved, but AI features need indexing. Configure RAG_INTERNAL_URL only when the RAG service can receive private-network traffic (paid Render service in the same region), or set RAG_URL to an externally reachable RAG service.";
+          "The RAG service rejected indexing with HTTP 429. The file is saved. For Render Free, deploy the API and RAG together and set RAG_URL=http://127.0.0.1:8000; separate free services may rate-limit their public requests.";
       } else if (
         typeof ragResponse === "string"
       ) {
@@ -243,6 +228,8 @@ const uploadDocument = async (req, res, next) => {
       return res.status(201).json({
 
         success: true,
+        documentSaved: true,
+        indexingSuccess: false,
 
         message: "Document saved, but AI indexing failed: " + ragMessage,
 
@@ -383,16 +370,19 @@ const getDocument = async (req, res, next) => {
 
 const reindexDocument = async (req, res, next) => {
   try {
-    const document = await Document.findOne({ _id: req.params.id, user: req.user._id });
+    const document = await Document.findOne({ _id: req.params.id, user: req.user._id }).select("+fileData");
     if (!document) return res.status(404).json({ success: false, message: "Document not found" });
-    if (!document.filePath || !fs.existsSync(document.filePath)) {
+    const source = document.fileData
+      ? Buffer.from(document.fileData)
+      : (document.filePath && fs.existsSync(document.filePath) ? document.filePath : null);
+    if (!source) {
       return res.status(410).json({ success: false, message: "The saved file is no longer on the server. Please upload it again." });
     }
 
     document.status = "processing";
     await document.save();
     try {
-      await ragService.indexDocument(document.filePath, document.originalName, document.mimeType);
+      await ragService.indexDocument(source, document.originalName, document.mimeType);
       document.status = "ready";
       await document.save();
       return res.status(200).json({ success: true, message: "Document indexed successfully", document });

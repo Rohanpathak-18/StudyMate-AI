@@ -12,6 +12,11 @@ const normalizeUrl = (url) => {
 // A free Render web service cannot receive private-network requests, so try the
 // alternate configured URL when the first endpoint is unavailable or rate limited.
 const getRagUrls = () => {
+  if (process.env.RAG_LOCAL_ONLY === "true") {
+    const localUrl = normalizeUrl(process.env.RAG_URL);
+    if (!localUrl) throw new Error("RAG_URL must be set for the combined API/RAG service.");
+    return [localUrl];
+  }
   const urls = [...new Set([normalizeUrl(process.env.RAG_INTERNAL_URL), normalizeUrl(process.env.RAG_URL)].filter(Boolean))];
   if (!urls.length) throw new Error("Set RAG_URL to the address of your running RAG service.");
   return urls;
@@ -41,15 +46,16 @@ const postRag = async (route, payload) => {
 };
 
 const indexDocument = async (filePath, originalName, mimeType) => {
-  if (!filePath) throw new Error("File path is missing.");
-  if (!fs.existsSync(filePath)) throw new Error(`File does not exist: ${filePath}`);
+  if (!filePath) throw new Error("Document data is missing.");
+  const fileBuffer = Buffer.isBuffer(filePath) ? filePath : null;
+  if (!fileBuffer && !fs.existsSync(filePath)) throw new Error(`File does not exist: ${filePath}`);
 
   const urls = getRagUrls();
   let lastError;
   for (const baseUrl of urls) {
     for (let attempt = 0; attempt < 3; attempt += 1) {
       const formData = new FormData();
-      formData.append("file", fs.createReadStream(filePath), {
+      formData.append("file", fileBuffer || fs.createReadStream(filePath), {
         filename: originalName,
         contentType: mimeType || "application/octet-stream",
       });

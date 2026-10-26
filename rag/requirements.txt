@@ -2,6 +2,7 @@ fastapi
 uvicorn[standard]
 python-dotenv
 python-multipart
+pymongo
 
 langchain
 langchain-community
