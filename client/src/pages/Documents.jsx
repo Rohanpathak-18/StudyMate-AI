@@ -84,6 +84,22 @@ const Documents = () => {
     }
   };
 
+  const handleRetryIndexing = async (documentId) => {
+    setDocuments((current) => current.map((document) => document._id === documentId ? { ...document, status: "processing" } : document));
+    try {
+      const response = await api.post(`/documents/${documentId}/reindex`);
+      setDocuments((current) => current.map((document) => document._id === documentId ? response.data.document : document));
+      toast.success("Document is ready for AI study tools.");
+    } catch (error) {
+      if (error.response?.data?.document) {
+        setDocuments((current) => current.map((document) => document._id === documentId ? error.response.data.document : document));
+      } else {
+        setDocuments((current) => current.map((document) => document._id === documentId ? { ...document, status: "failed" } : document));
+      }
+      toast.error(error.response?.data?.message || "Could not index this document.");
+    }
+  };
+
   return (
     <div className="min-h-screen w-full bg-[#07111F] text-[#F1F7FF]">
       <div className="mx-auto w-full max-w-6xl px-3 py-5 sm:px-6 sm:py-8 lg:py-10">
@@ -148,6 +164,7 @@ const Documents = () => {
               documents={documents}
               loading={loading}
               onDelete={handleDelete}
+              onRetry={handleRetryIndexing}
             />
           </div>
         </div>

@@ -203,13 +203,9 @@ const uploadDocument = async (req, res, next) => {
       let ragMessage =
         "RAG indexing failed";
 
-      if (
-        ragStatus === 429 &&
-        typeof ragResponse === "string" &&
-        ragResponse.toLowerCase().includes("too many requests")
-      ) {
+      if (ragStatus === 429) {
         ragMessage =
-          "The RAG service is rate limiting requests. Configure RAG_INTERNAL_URL with its Render internal address (same region/workspace), then restart the API. Free RAG web services cannot receive private-network traffic.";
+          "The RAG service rejected indexing with HTTP 429. The uploaded file is saved, but AI features need indexing. Configure RAG_INTERNAL_URL only when the RAG service can receive private-network traffic (paid Render service in the same region), or set RAG_URL to an externally reachable RAG service.";
       } else if (
         typeof ragResponse === "string"
       ) {
@@ -383,6 +379,35 @@ const getDocument = async (req, res, next) => {
   }
 };
 
+const reindexDocument = async (req, res, next) => {
+  try {
+    const document = await Document.findOne({ _id: req.params.id, user: req.user._id });
+    if (!document) return res.status(404).json({ success: false, message: "Document not found" });
+    if (!document.filePath || !fs.existsSync(document.filePath)) {
+      return res.status(410).json({ success: false, message: "The saved file is no longer on the server. Please upload it again." });
+    }
+
+    document.status = "processing";
+    await document.save();
+    try {
+      await ragService.indexDocument(document.filePath, document.originalName, document.mimeType);
+      document.status = "ready";
+      await document.save();
+      return res.status(200).json({ success: true, message: "Document indexed successfully", document });
+    } catch (ragError) {
+      document.status = "failed";
+      await document.save();
+      const status = ragError.response?.status || 503;
+      const message = status === 429
+        ? "The RAG service is still rate limiting requests. Check that RAG_INTERNAL_URL points to a RAG service that can receive private traffic, or configure an externally reachable RAG_URL."
+        : ragError.response?.data?.detail || ragError.response?.data?.message || ragError.message || "AI indexing failed";
+      return res.status(503).json({ success: false, message, document });
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
 
 // ============================================================
 // DELETE DOCUMENT
@@ -461,5 +486,6 @@ module.exports = {
   uploadDocument,
   getDocuments,
   getDocument,
+  reindexDocument,
   deleteDocument,
 };

@@ -2,270 +2,78 @@ const axios = require("axios");
 const fs = require("fs");
 const FormData = require("form-data");
 
-const getRagUrl = () => {
-  // Prefer Render's private-network address when configured. Public onrender.com
-  // calls can be subject to inbound rate limits, especially on free services.
-  const url = (
-    process.env.RAG_INTERNAL_URL ||
-    process.env.RAG_URL ||
-    ""
-  ).trim();
-
-  if (!url) {
-    throw new Error(
-      "RAG_URL is missing from the server environment variables."
-    );
-  }
-
-  const normalizedUrl = /^[a-z]+:\/\//i.test(url)
-    ? url
-    : `http://${url}`;
-
-  return normalizedUrl.replace(/\/+$/, "");
+const normalizeUrl = (url) => {
+  const value = (url || "").trim();
+  if (!value) return "";
+  return (/^[a-z]+:\/\//i.test(value) ? value : `http://${value}`).replace(/\/+$/, "");
 };
 
+// Render internal URLs are preferred, with the public service URL as a fallback.
+// A free Render web service cannot receive private-network requests, so try the
+// alternate configured URL when the first endpoint is unavailable or rate limited.
+const getRagUrls = () => {
+  const urls = [...new Set([normalizeUrl(process.env.RAG_INTERNAL_URL), normalizeUrl(process.env.RAG_URL)].filter(Boolean))];
+  if (!urls.length) throw new Error("Set RAG_URL to the address of your running RAG service.");
+  return urls;
+};
 
-// ============================================================
-// INDEX DOCUMENT
-// ============================================================
+const shouldTryFallback = (error) => {
+  const status = error.response?.status;
+  return status === 429 || status >= 500 || ["ECONNREFUSED", "ENOTFOUND", "EHOSTUNREACH", "ECONNRESET", "ETIMEDOUT"].includes(error.code);
+};
 
-const indexDocument = async (
-  filePath,
-  originalName,
-  mimeType
-) => {
-  if (!filePath) {
-    throw new Error("File path is missing.");
-  }
-
-  if (!fs.existsSync(filePath)) {
-    throw new Error(
-      `File does not exist: ${filePath}`
-    );
-  }
-
-  const ragUrl = getRagUrl();
-
-  const endpoint =
-    `${ragUrl}/api/index-document`;
-
-  console.log("");
-  console.log("========================================");
-  console.log("STUDYMATE RAG DEBUG");
-  console.log("========================================");
-  console.log("RAG_URL:", ragUrl);
-  console.log("Endpoint:", endpoint);
-  console.log("File:", originalName);
-  console.log("MIME:", mimeType);
-  console.log("File path:", filePath);
-  console.log(
-    "File exists:",
-    fs.existsSync(filePath)
-  );
-  console.log("========================================");
-  console.log("");
-
-
-  const formData = new FormData();
-
-  formData.append(
-    "file",
-    fs.createReadStream(filePath),
-    {
-      filename: originalName,
-      contentType:
-        mimeType ||
-        "application/octet-stream",
-    }
-  );
-
-
-  try {
-    const response = await axios.post(
-      endpoint,
-      formData,
-      {
-        headers: {
-          ...formData.getHeaders(),
-        },
-
-        timeout: 300000,
-
-        maxContentLength: Infinity,
-
-        maxBodyLength: Infinity,
-
-        validateStatus: () => true,
-      }
-    );
-
-
-    console.log("");
-    console.log("========================================");
-    console.log("RAG RESPONSE");
-    console.log("========================================");
-    console.log(
-      "Status:",
-      response.status
-    );
-    console.log(
-      "Status text:",
-      response.statusText
-    );
-    console.log(
-      "Response data:",
-      response.data
-    );
-    console.log(
-      "Response headers:",
-      response.headers
-    );
-    console.log("========================================");
-    console.log("");
-
-
-    // --------------------------------------------------------
-    // SUCCESS
-    // --------------------------------------------------------
-
-    if (
-      response.status >= 200 &&
-      response.status < 300
-    ) {
+const postRag = async (route, payload) => {
+  const urls = getRagUrls();
+  let lastError;
+  for (const baseUrl of urls) {
+    try {
+      const response = await axios.post(`${baseUrl}${route}`, payload, { timeout: 300000 });
       return response.data;
+    } catch (error) {
+      lastError = error;
+      if (!shouldTryFallback(error)) throw error;
+      console.warn(`RAG request to ${baseUrl} failed (${error.response?.status || error.code}); trying the next configured URL when available.`);
     }
-
-
-    // --------------------------------------------------------
-    // RAG RETURNED AN ERROR
-    // --------------------------------------------------------
-
-    const error = new Error(
-      `RAG returned HTTP ${response.status}`
-    );
-
-    error.response = {
-      status: response.status,
-      statusText: response.statusText,
-      data: response.data,
-      headers: response.headers,
-    };
-
-    throw error;
-
-  } catch (error) {
-
-    console.error("");
-    console.error(
-      "========================================"
-    );
-    console.error(
-      "RAG INDEXING FAILED"
-    );
-    console.error(
-      "========================================"
-    );
-    console.error(
-      "Endpoint:",
-      endpoint
-    );
-    console.error(
-      "Error message:",
-      error.message
-    );
-    console.error(
-      "Error code:",
-      error.code
-    );
-    console.error(
-      "HTTP status:",
-      error.response?.status
-    );
-    console.error(
-      "Response body:",
-      error.response?.data
-    );
-    console.error(
-      "Response headers:",
-      error.response?.headers
-    );
-    console.error(
-      "========================================"
-    );
-    console.error("");
-
-    throw error;
   }
+  throw lastError;
 };
 
+const indexDocument = async (filePath, originalName, mimeType) => {
+  if (!filePath) throw new Error("File path is missing.");
+  if (!fs.existsSync(filePath)) throw new Error(`File does not exist: ${filePath}`);
 
-// ============================================================
-// CHAT
-// ============================================================
+  const urls = getRagUrls();
+  let lastError;
+  for (const baseUrl of urls) {
+    const formData = new FormData();
+    formData.append("file", fs.createReadStream(filePath), {
+      filename: originalName,
+      contentType: mimeType || "application/octet-stream",
+    });
 
-const askQuestion = async (message) => {
-  const ragUrl = getRagUrl();
-
-  const response = await axios.post(
-    `${ragUrl}/api/chat`,
-    {
-      message,
-      k: 4,
-    },
-    {
-      timeout: 300000,
+    try {
+      const response = await axios.post(`${baseUrl}/api/index-document`, formData, {
+        headers: formData.getHeaders(),
+        timeout: 300000,
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity,
+        validateStatus: () => true,
+      });
+      if (response.status >= 200 && response.status < 300) return response.data;
+      const error = new Error(`RAG returned HTTP ${response.status}`);
+      error.response = { status: response.status, statusText: response.statusText, data: response.data, headers: response.headers };
+      throw error;
+    } catch (error) {
+      lastError = error;
+      console.error(`RAG indexing request failed for ${baseUrl}:`, error.response?.status || error.code || error.message);
+      if (!shouldTryFallback(error)) throw error;
     }
-  );
-
-  return response.data;
+  }
+  throw lastError;
 };
 
+const askQuestion = async (message) => postRag("/api/chat", { message, k: 4 });
+const generateQuiz = async (count = 5) => (await postRag("/api/generate-quiz", { count })).quiz;
+const generateFlashcards = async (count = 10) => (await postRag("/api/generate-flashcards", { count })).flashcards;
 
-// ============================================================
-// QUIZ
-// ============================================================
-
-const generateQuiz = async (count = 5) => {
-  const ragUrl = getRagUrl();
-
-  const response = await axios.post(
-    `${ragUrl}/api/generate-quiz`,
-    {
-      count,
-    },
-    {
-      timeout: 300000,
-    }
-  );
-
-  return response.data.quiz;
-};
-
-
-// ============================================================
-// FLASHCARDS
-// ============================================================
-
-const generateFlashcards = async (count = 10) => {
-  const ragUrl = getRagUrl();
-
-  const response = await axios.post(
-    `${ragUrl}/api/generate-flashcards`,
-    {
-      count,
-    },
-    {
-      timeout: 300000,
-    }
-  );
-
-  return response.data.flashcards;
-};
-
-
-module.exports = {
-  indexDocument,
-  askQuestion,
-  generateQuiz,
-  generateFlashcards,
-};
+module.exports = { indexDocument, askQuestion, generateQuiz, generateFlashcards };

@@ -4,6 +4,7 @@ import {
   Presentation,
   Trash2,
   LoaderCircle,
+  RefreshCw,
 } from "lucide-react";
 
 const getFileIcon = (mimeType) => {
@@ -38,7 +39,7 @@ const formatSize = (bytes) => {
   return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
 };
 
-const DocumentList = ({ documents, loading, onDelete }) => {
+const DocumentList = ({ documents, loading, onDelete, onRetry }) => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
@@ -94,11 +95,10 @@ const DocumentList = ({ documents, loading, onDelete }) => {
             </div>
           </div>
 
-          <button
-            onClick={() => onDelete(document._id)}
-            className="shrink-0 rounded-lg p-2 text-[#7890A8] transition hover:bg-red-500/10 hover:text-red-400">
-            <Trash2 size={18} />
-          </button>
+          <div className="flex shrink-0 items-center gap-1">
+            {document.status === "failed" && <button type="button" onClick={() => onRetry?.(document._id)} title="Retry AI indexing" aria-label={`Retry indexing ${document.originalName}`} className="rounded-lg p-2 text-[#7890A8] transition hover:bg-[#7C3AED]/10 hover:text-[#7C3AED]"><RefreshCw size={17}/></button>}
+            <button type="button" onClick={() => onDelete(document._id)} aria-label={`Delete ${document.originalName}`} className="rounded-lg p-2 text-[#7890A8] transition hover:bg-red-500/10 hover:text-red-400"><Trash2 size={18} /></button>
+          </div>
         </div>
       ))}
     </div>

@@ -7,11 +7,11 @@
   --border: #e5e7f0;
   --text: #20243a;
   --muted: #737991;
-  --primary: #7047eb;
-  --secondary: #8a65f5;
-  --secondaryText: #7047eb;
-  --accent: #f2a93b;
-  --soft: #a18af4;
+  --primary: #7652c8;
+  --secondary: #7652c8;
+  --secondaryText: #7652c8;
+  --accent: #7652c8;
+  --soft: #9a83d5;
   --danger: #dc4561;
 
   font-family:
@@ -272,7 +272,7 @@ button:disabled {
 .landing-links a, .login-link { color: #69667e; font-size: 13px; font-weight: 600; text-decoration: none; }
 .landing-links a:hover, .login-link:hover { color: #7952e8; }
 .button-primary, .button-secondary { display: inline-flex; min-height: 42px; align-items: center; justify-content: center; gap: 9px; padding: 0 18px; border: 1px solid transparent; border-radius: 12px; font-size: 13px; font-weight: 700; text-decoration: none; transition: transform .18s ease, box-shadow .18s ease, background .18s ease; }
-.button-primary { color: #fff; background: linear-gradient(105deg,#8b49df,#5269e9); box-shadow: 0 8px 20px rgba(112,71,235,.18); }
+.button-primary { color: #fff; background: #7652c8; box-shadow: 0 8px 20px rgba(118,82,200,.16); }
 .button-primary:hover { transform: translateY(-1px); box-shadow: 0 11px 26px rgba(112,71,235,.25); }
 .button-secondary { color: #5b5271; border-color: #e7e2f1; background: rgba(255,255,255,.76); }
 .button-secondary:hover { border-color: #cfc0f5; background: #fff; }
@@ -280,7 +280,7 @@ button:disabled {
 .landing-hero { position: relative; padding: 72px 24px 55px; overflow: hidden; text-align: center; background: radial-gradient(ellipse at 4% 35%,rgba(210,190,255,.22),transparent 35%), radial-gradient(ellipse at 95% 32%,rgba(177,212,255,.22),transparent 36%),linear-gradient(180deg,#fbf9ff 0%,#fff 91%); }
 .eyebrow-pill { display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border: 1px solid #e9ddff; border-radius: 999px; background: #f8f2ff; color: #7744d6; font-size: 11px; font-weight: 700; letter-spacing: .025em; }
 .landing-hero h1, .dashboard-hero h1 { margin: 21px 0 0; color: #28243d; font-size: clamp(40px,6vw,68px); font-weight: 800; line-height: 1.03; letter-spacing: -.065em; }
-.landing-hero h1 span, .dashboard-hero h1 span { color: transparent; background: linear-gradient(100deg,#a344dc 2%,#5369e9 78%); background-clip: text; }
+.landing-hero h1 span, .dashboard-hero h1 span { color: transparent; background: linear-gradient(100deg,#9a72dc,#7652c8); background-clip: text; }
 .landing-hero > p { max-width: 610px; margin: 19px auto 0; color: #77748c; font-size: 15px; line-height: 1.75; }
 .landing-hero .hero-actions { justify-content: center; margin-top: 25px; gap: 12px; }
 .study-preview { display: grid; grid-template-columns: 180px 1fr; max-width: 1010px; min-height: 365px; margin: 53px auto 0; overflow: hidden; border: 1px solid #e8e4f1; border-radius: 21px; background: rgba(255,255,255,.94); box-shadow: 0 28px 75px rgba(71,54,120,.12); text-align: left; }
