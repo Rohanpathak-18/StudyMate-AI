@@ -23,7 +23,7 @@ const useAuthStore = create((set) => ({
     try {
       const response = await api.post(
         "/auth/register",
-        userData
+        { ...userData, name: userData.name.trim(), email: userData.email.trim().toLowerCase() }
       );
 
       const {
@@ -84,7 +84,7 @@ const useAuthStore = create((set) => ({
     try {
       const response = await api.post(
         "/auth/login",
-        credentials
+        { ...credentials, email: credentials.email.trim().toLowerCase() }
       );
 
       const {

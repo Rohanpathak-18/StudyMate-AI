@@ -16,6 +16,7 @@ import Quiz from "./pages/Quiz";
 import Flashcards from "./pages/Flashcards";
 import Progress from "./pages/Progress";
 import Profile from "./pages/Profile";
+import Landing from "./pages/Landing";
 
 const App = () => {
   return (
@@ -35,15 +36,9 @@ const App = () => {
       {/* Protected pages */}
       <Route element={<ProtectedRoute />}>
 
-        {/* Keep Dashboard completely independent.
-            Its original navbar/design stays untouched. */}
-        <Route
-          path="/dashboard"
-          element={<Dashboard />}
-        />
-
-        {/* Sidebar + Navbar layout */}
         <Route element={<AppLayout />}>
+
+          <Route path="/dashboard" element={<Dashboard />} />
 
           <Route
             path="/documents"
@@ -79,15 +74,9 @@ const App = () => {
 
       </Route>
 
-      {/* Default */}
       <Route
         path="/"
-        element={
-          <Navigate
-            to="/dashboard"
-            replace
-          />
-        }
+        element={<Landing />}
       />
 
       {/* Unknown route */}

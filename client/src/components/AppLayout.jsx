@@ -14,15 +14,9 @@ const AppLayout = () => {
         duration-200
       "
     >
+      <Navbar />
+      <main className="app-main"><Outlet /></main>
       <Sidebar />
-
-      <div className="lg:pl-64">
-        <Navbar />
-
-        <main>
-          <Outlet />
-        </main>
-      </div>
     </div>
   );
 };

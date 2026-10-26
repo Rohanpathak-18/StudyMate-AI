@@ -7,7 +7,7 @@ const defaultApiUrl =
     : "https://studymate-ai-4ne6.onrender.com/api";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || defaultApiUrl,
+  baseURL: (import.meta.env.VITE_API_URL || defaultApiUrl).replace(/\/+$/, ""),
 
   timeout: 120000,
 });

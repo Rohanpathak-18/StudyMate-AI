@@ -110,6 +110,7 @@ const applyTheme = (themeName) => {
   const root = document.documentElement;
 
   root.dataset.theme = themeName;
+  root.style.colorScheme = themeName === "light" ? "light" : "dark";
 
   Object.entries(selectedTheme.colors).forEach(([key, value]) => {
     root.style.setProperty(`--${key}`, value);
@@ -122,7 +123,7 @@ export const ThemeProvider = ({ children }) => {
 
     return savedTheme && themes[savedTheme]
       ? savedTheme
-      : "dark";
+      : "light";
   });
 
   useEffect(() => {

@@ -500,6 +500,12 @@ Add:
 
     VITE_API_URL=http://localhost:5000/api
 
+For a deployed frontend, set `VITE_API_URL` to the deployed Node API URL ending
+in `/api` (for example, `https://your-api.example.com/api`) and rebuild the
+frontend. Set the API service's `CLIENT_URL` to the frontend origin so browser
+requests pass the API's CORS allowlist. Multiple frontend origins can be
+comma-separated.
+
 ## Server
 
 Create:

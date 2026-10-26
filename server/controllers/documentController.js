@@ -242,23 +242,14 @@ const uploadDocument = async (req, res, next) => {
       // RETURN ACTUAL STATUS
       // --------------------------------------------------------
 
-      return res.status(ragStatus).json({
+      return res.status(201).json({
 
-        success: false,
+        success: true,
 
-        message:
-          "Document uploaded but RAG indexing failed",
+        message: "Document saved, but AI indexing failed: " + ragMessage,
 
         error:
           ragMessage,
-
-        ragStatus:
-
-          ragStatus,
-
-        ragResponse:
-
-          ragResponse || null,
 
         document,
       });

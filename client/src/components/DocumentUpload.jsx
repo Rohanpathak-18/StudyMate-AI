@@ -161,10 +161,11 @@ const DocumentUpload = ({ onUpload }) => {
         response.data?.document;
 
 
-      toast.success(
-        response.data?.message ||
-        "Document uploaded successfully"
-      );
+      if (response.data?.indexingError || document?.status === "failed") {
+        toast.error(response.data?.message || "Document saved, but AI indexing failed. You can retry indexing later.", { duration: 7000 });
+      } else {
+        toast.success(response.data?.message || "Document uploaded successfully");
+      }
 
 
       clearFile();
@@ -348,7 +349,7 @@ const DocumentUpload = ({ onUpload }) => {
         <Upload size={18} />
 
         {uploading
-          ? "Uploading & indexing..."
+          ? "Uploading your study material..."
           : "Upload Document"}
 
       </button>

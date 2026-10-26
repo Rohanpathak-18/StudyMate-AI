@@ -18,9 +18,11 @@ const generateToken = (userId) => {
 const register = async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
+    const normalizedName = typeof name === "string" ? name.trim() : "";
+    const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
 
     // Validation
-    if (!name || !email || !password) {
+    if (!normalizedName || !normalizedEmail || typeof password !== "string" || !password) {
       return res.status(400).json({
         success: false,
         message: "Name, email and password are required",
@@ -36,7 +38,7 @@ const register = async (req, res, next) => {
 
     // Check existing user
     const existingUser = await User.findOne({
-      email: email.toLowerCase(),
+      email: normalizedEmail,
     });
 
     if (existingUser) {
@@ -51,8 +53,8 @@ const register = async (req, res, next) => {
 
     // Create user
     const user = await User.create({
-      name,
-      email: email.toLowerCase(),
+      name: normalizedName,
+      email: normalizedEmail,
       password: hashedPassword,
     });
 
@@ -71,6 +73,9 @@ const register = async (req, res, next) => {
       },
     });
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({ success: false, message: "An account with this email already exists" });
+    }
     next(error);
   }
 };
@@ -79,8 +84,9 @@ const register = async (req, res, next) => {
 const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
+    const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
 
-    if (!email || !password) {
+    if (!normalizedEmail || typeof password !== "string" || !password) {
       return res.status(400).json({
         success: false,
         message: "Email and password are required",
@@ -89,7 +95,7 @@ const login = async (req, res, next) => {
 
     // Find user
     const user = await User.findOne({
-      email: email.toLowerCase(),
+      email: normalizedEmail,
     });
 
     if (!user) {

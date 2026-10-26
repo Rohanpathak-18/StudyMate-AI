@@ -37,6 +37,13 @@ const dashboardRoutes =
 
 const app = express();
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "https://studymate-ai-4ne6.onrender.com",
+  ...(process.env.CLIENT_URL || "").split(",").map((origin) => origin.trim()).filter(Boolean),
+];
+
 
 
 connectDB();
@@ -46,10 +53,10 @@ connectDB();
 app.use(
   cors({
 
-    origin: [
-      "http://localhost:5173",
-      "https://studymate-ai-4ne6.onrender.com",
-    ],
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error("This site is not allowed to access the StudyMate API"));
+    },
 
     credentials: true,
 
