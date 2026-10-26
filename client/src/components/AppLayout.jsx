@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom";
 
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
+import ContactFooter from "./ContactFooter";
 
 const AppLayout = () => {
   return (
@@ -16,6 +17,7 @@ const AppLayout = () => {
     >
       <Navbar />
       <main className="app-main"><Outlet /></main>
+      <ContactFooter />
       <Sidebar />
     </div>
   );
