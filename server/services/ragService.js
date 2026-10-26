@@ -22,6 +22,8 @@ const shouldTryFallback = (error) => {
   return status === 429 || status >= 500 || ["ECONNREFUSED", "ENOTFOUND", "EHOSTUNREACH", "ECONNRESET", "ETIMEDOUT"].includes(error.code);
 };
 
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 const postRag = async (route, payload) => {
   const urls = getRagUrls();
   let lastError;
@@ -45,28 +47,42 @@ const indexDocument = async (filePath, originalName, mimeType) => {
   const urls = getRagUrls();
   let lastError;
   for (const baseUrl of urls) {
-    const formData = new FormData();
-    formData.append("file", fs.createReadStream(filePath), {
-      filename: originalName,
-      contentType: mimeType || "application/octet-stream",
-    });
-
-    try {
-      const response = await axios.post(`${baseUrl}/api/index-document`, formData, {
-        headers: formData.getHeaders(),
-        timeout: 300000,
-        maxContentLength: Infinity,
-        maxBodyLength: Infinity,
-        validateStatus: () => true,
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const formData = new FormData();
+      formData.append("file", fs.createReadStream(filePath), {
+        filename: originalName,
+        contentType: mimeType || "application/octet-stream",
       });
-      if (response.status >= 200 && response.status < 300) return response.data;
-      const error = new Error(`RAG returned HTTP ${response.status}`);
-      error.response = { status: response.status, statusText: response.statusText, data: response.data, headers: response.headers };
-      throw error;
-    } catch (error) {
-      lastError = error;
-      console.error(`RAG indexing request failed for ${baseUrl}:`, error.response?.status || error.code || error.message);
-      if (!shouldTryFallback(error)) throw error;
+
+      try {
+        const response = await axios.post(`${baseUrl}/api/index-document`, formData, {
+          headers: formData.getHeaders(),
+          timeout: 300000,
+          maxContentLength: Infinity,
+          maxBodyLength: Infinity,
+          validateStatus: () => true,
+        });
+        if (response.status >= 200 && response.status < 300) return response.data;
+        const error = new Error(`RAG returned HTTP ${response.status}`);
+        error.response = { status: response.status, statusText: response.statusText, data: response.data, headers: response.headers };
+        throw error;
+      } catch (error) {
+        lastError = error;
+        console.error(`RAG indexing request failed for ${baseUrl}:`, error.response?.status || error.code || error.message);
+        if (!shouldTryFallback(error)) throw error;
+
+        // A brief 429 can be transient. Retry twice, honoring Retry-After when
+        // present, before moving to the alternate configured RAG URL.
+        if (error.response?.status === 429 && attempt < 2) {
+          const retryAfter = Number(error.response.headers?.["retry-after"]);
+          const delay = Number.isFinite(retryAfter) && retryAfter > 0
+            ? Math.min(retryAfter * 1000, 15000)
+            : 1500 * (attempt + 1);
+          await wait(delay);
+          continue;
+        }
+        break;
+      }
     }
   }
   throw lastError;

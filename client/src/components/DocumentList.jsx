@@ -89,7 +89,7 @@ const DocumentList = ({ documents, loading, onDelete, onRetry }) => {
                 <span>•</span>
 
                 <span className="capitalize">
-                  {document.status}
+                  {document.status === "failed" ? "Saved · AI indexing failed" : document.status}
                 </span>
               </div>
             </div>

@@ -121,6 +121,8 @@ const uploadDocument = async (req, res, next) => {
 
       return res.status(201).json({
         success: true,
+        documentSaved: true,
+        indexingSuccess: false,
 
         message:
           "Document uploaded and indexed successfully",
