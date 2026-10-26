@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, BookOpen, Check, FileText, MessageCircle, Sparkles, Trophy } from "lucide-react";
 import ContactFooter from "../components/ContactFooter";
+import ThemeSwitcher from "../components/ThemeSwitcher";
 
 const tools = [
   { icon: MessageCircle, title: "Your AI tutor", text: "Ask questions and get clear answers grounded in your own study material.", image: "/images/tutor-study.svg", alt: "A study document and a helpful tutor chat" },
@@ -21,6 +22,7 @@ const Landing = () => {
         <a href="#study-tools">Study tools</a>
       </nav>
       <div className="landing-actions">
+        <ThemeSwitcher />
         <Link className="login-link" to="/login">Log in</Link>
         <Link className="button-primary" to="/register">Get started <ArrowRight size={16} /></Link>
       </div>

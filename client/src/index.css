@@ -263,9 +263,8 @@ button:disabled {
 }
 
 /* StudyMate's study-first visual system */
-.landing-page { --bg: #fbfaff; --surface: #fff; --text: #25233b; --muted: #77748e; --border: #ece9f6; }
 .landing-nav, .app-header { position: sticky; top: 0; z-index: 40; display: flex; align-items: center; justify-content: space-between; gap: 28px; min-height: 74px; padding: 0 clamp(20px, 5vw, 76px); border-bottom: 1px solid rgba(230,226,243,.85); background: rgba(255,255,255,.88); backdrop-filter: blur(18px); }
-.brand-lockup { display: inline-flex; align-items: center; gap: 10px; color: #28233e; font-size: 15px; font-weight: 750; letter-spacing: -.035em; text-decoration: none; white-space: nowrap; }
+.brand-lockup { display: inline-flex; align-items: center; gap: 10px; color: var(--text); font-size: 15px; font-weight: 750; letter-spacing: -.035em; text-decoration: none; white-space: nowrap; }
 .brand-lockup b { color: #7952e8; }
 .brand-mark { display: grid; width: 35px; height: 35px; place-items: center; overflow: hidden; border: 1px solid #eee6ff; border-radius: 12px; background: #fff; }.brand-mark img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .landing-links, .landing-actions, .hero-actions { display: flex; align-items: center; gap: 24px; }
@@ -395,3 +394,46 @@ button:disabled {
   .footer-bottom { align-items: flex-start; flex-direction: column; margin-top: 24px; }
   .landing-footer .footer-credit { margin-top: 0; }
 }
+
+[data-theme="dark"] .landing-nav { border-color: var(--border); background: rgba(42,39,53,.94); }
+[data-theme="dark"] .landing-links a,
+[data-theme="dark"] .landing-actions .login-link,
+[data-theme="dark"] .footer-contact-details a,
+[data-theme="dark"] .footer-links a { color: var(--muted); }
+[data-theme="dark"] .landing-hero { background: radial-gradient(ellipse at 4% 35%,rgba(125,82,211,.16),transparent 35%),radial-gradient(ellipse at 95% 32%,rgba(72,105,180,.14),transparent 36%),linear-gradient(180deg,#252330 0%,var(--bg) 91%); }
+[data-theme="dark"] .landing-hero h1,
+[data-theme="dark"] .section-heading h2,
+[data-theme="dark"] .landing-cta h2,
+[data-theme="dark"] .preview-welcome h2,
+[data-theme="dark"] .footer-contact-details h2,
+[data-theme="dark"] .footer-contact-form h2 { color: var(--text); }
+[data-theme="dark"] .landing-hero > p,
+[data-theme="dark"] .section-heading > p,
+[data-theme="dark"] .how-steps p,
+[data-theme="dark"] .tool-card p,
+[data-theme="dark"] .preview-welcome p,
+[data-theme="dark"] .footer-brand > span { color: var(--muted); }
+[data-theme="dark"] .eyebrow-pill { border-color: #51436e; background: #332a45; color: #c5aaff; }
+[data-theme="dark"] .study-preview,
+[data-theme="dark"] .preview-cards .preview-card,
+[data-theme="dark"] .how-steps article,
+[data-theme="dark"] .tool-card { border-color: var(--border); background: var(--surface); }
+[data-theme="dark"] .preview-sidebar { border-color: var(--border); background: #252330; }
+[data-theme="dark"] .preview-card b,
+[data-theme="dark"] .how-steps h3,
+[data-theme="dark"] .tool-card h3 { color: var(--text); }
+[data-theme="dark"] .preview-card small,
+[data-theme="dark"] .preview-caption { color: var(--muted); }
+[data-theme="dark"] .landing-cta { border-color: var(--border); background: linear-gradient(110deg,#2e293a,#282b3b); }
+[data-theme="dark"] .landing-cta p { color: var(--muted); }
+[data-theme="dark"] .landing-footer { border-color: var(--border); background: var(--surface); }
+[data-theme="dark"] .footer-contact-form { border-color: var(--border); background: var(--bg); }
+[data-theme="dark"] .footer-contact-form label { color: var(--muted); }
+[data-theme="dark"] .footer-contact-form input,
+[data-theme="dark"] .footer-contact-form textarea { border-color: var(--border); background: var(--surface); color: var(--text); }
+[data-theme="dark"] .footer-contact-form input::placeholder,
+[data-theme="dark"] .footer-contact-form textarea::placeholder { color: #928ca0; }
+[data-theme="dark"] .footer-contact-form > p,
+[data-theme="dark"] .footer-bottom,
+[data-theme="dark"] .landing-footer .footer-credit { color: var(--muted); }
+[data-theme="dark"] .footer-bottom { border-color: var(--border); }
