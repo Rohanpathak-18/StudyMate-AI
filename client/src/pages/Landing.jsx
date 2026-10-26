@@ -1,17 +1,17 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, BookOpen, BrainCircuit, Check, FileText, MessageCircle, Sparkles, Trophy } from "lucide-react";
+import { ArrowRight, BookOpen, Check, FileText, MessageCircle, Sparkles, Trophy } from "lucide-react";
 
 const tools = [
-  { icon: MessageCircle, title: "Your AI tutor", text: "Ask questions and get clear answers grounded in your own study material." },
-  { icon: Trophy, title: "Smart practice", text: "Build quick quizzes from your notes and see what you already know." },
-  { icon: BookOpen, title: "Better revision", text: "Turn long documents into focused flashcards you can review anywhere." },
+  { icon: MessageCircle, title: "Your AI tutor", text: "Ask questions and get clear answers grounded in your own study material.", image: "/images/tutor-study.svg", alt: "A study document and a helpful tutor chat" },
+  { icon: Trophy, title: "Smart practice", text: "Build quick quizzes from your notes and see what you already know.", image: "/images/quiz-study.svg", alt: "A sample quiz with a completed answer" },
+  { icon: BookOpen, title: "Better revision", text: "Turn long documents into focused flashcards you can review anywhere.", image: "/images/flashcards-study.svg", alt: "A stack of illustrated revision cards" },
 ];
 
 const Landing = () => (
   <div className="landing-page min-h-screen overflow-hidden bg-[var(--bg)] text-[var(--text)]">
     <header className="landing-nav">
       <Link to="/" className="brand-lockup">
-        <span className="brand-mark"><BrainCircuit size={21} /></span>
+        <span className="brand-mark"><img src="/logo-symbol.png" alt="" /></span>
         <span>StudyMate <b>AI</b></span>
       </Link>
       <nav aria-label="Main navigation" className="landing-links">
@@ -36,7 +36,7 @@ const Landing = () => (
 
         <div className="study-preview" aria-label="StudyMate learning workspace preview">
           <div className="preview-sidebar">
-            <span className="preview-logo"><BrainCircuit size={16} /></span>
+            <span className="preview-logo"><img src="/logo-symbol.png" alt="" /></span>
             <span className="preview-nav active"><FileText size={15} /> My materials</span>
             <span className="preview-nav"><MessageCircle size={15} /> AI tutor</span>
             <span className="preview-nav"><Trophy size={15} /> Practice quiz</span>
@@ -44,7 +44,7 @@ const Landing = () => (
           </div>
           <div className="preview-content">
             <div className="preview-topline"><span>YOUR STUDY SPACE</span><span className="preview-avatar">S</span></div>
-            <div className="preview-welcome"><div><span className="preview-label">A little progress adds up</span><h2>What are we learning today?</h2><p>Pick up where you left off or add a new subject.</p></div><div className="preview-illustration"><div className="orbit orbit-one"/><div className="orbit orbit-two"/><span><BrainCircuit size={38}/></span></div></div>
+            <div className="preview-welcome"><div><span className="preview-label">A little progress adds up</span><h2>What are we learning today?</h2><p>Pick up where you left off or add a new subject.</p></div><img className="study-preview-image" src="/images/hero-study.svg" alt="A student learning with StudyMate AI" /></div>
             <div className="preview-cards">
               <div className="preview-card"><span className="preview-icon purple"><FileText size={16}/></span><b>Your materials</b><small>Keep your notes in one place</small></div>
               <div className="preview-card"><span className="preview-icon peach"><Trophy size={16}/></span><b>Practice a topic</b><small>Learn it by testing yourself</small></div>
@@ -66,12 +66,12 @@ const Landing = () => (
 
       <section id="study-tools" className="tools-section">
         <div className="section-heading"><span className="section-kicker">Made for focused learning</span><h2>Your study toolkit, all together</h2></div>
-        <div className="tool-cards">{tools.map(({icon: Icon, title, text}) => <article className="tool-card" key={title}><span className="tool-icon"><Icon size={20}/></span><h3>{title}</h3><p>{text}</p><span className="tool-check"><Check size={15}/> Built around your materials</span></article>)}</div>
+        <div className="tool-cards">{tools.map(({icon: Icon, title, text, image, alt}) => <article className="tool-card" key={title}><img className="tool-art" src={image} alt={alt} loading="lazy"/><span className="tool-icon"><Icon size={20}/></span><h3>{title}</h3><p>{text}</p><span className="tool-check"><Check size={15}/> Built around your materials</span></article>)}</div>
       </section>
 
       <section className="landing-cta"><div><span className="section-kicker">Your next study session starts here</span><h2>Make learning feel more manageable.</h2><p>Bring your materials. We’ll help you take it from there.</p></div><Link className="button-primary button-large" to="/register">Create your free account <ArrowRight size={17}/></Link></section>
     </main>
-    <footer className="landing-footer"><Link to="/" className="brand-lockup"><span className="brand-mark"><BrainCircuit size={18}/></span><span>StudyMate <b>AI</b></span></Link><span>Study with clarity. Grow with confidence.</span></footer>
+    <footer className="landing-footer"><div className="footer-brand"><Link to="/" className="brand-lockup"><span className="brand-mark"><img src="/logo-symbol.png" alt="" /></span><span>StudyMate <b>AI</b></span></Link><span>Study with clarity. Grow with confidence.</span></div><div className="footer-links"><a href="#how-it-works">How it works</a><a href="#study-tools">Study tools</a><Link to="/login">Log in</Link><Link to="/register">Get started</Link></div><span className="footer-credit">Designed with love ❤️ by Rohan Pathak</span></footer>
   </div>
 );
 

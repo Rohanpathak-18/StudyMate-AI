@@ -67,6 +67,7 @@ const useAuthStore = create((set) => ({
         message:
           error.response?.data?.message ||
           "Registration failed",
+        status: error.response?.status,
       };
     }
   },
@@ -128,6 +129,7 @@ const useAuthStore = create((set) => ({
         message:
           error.response?.data?.message ||
           "Login failed",
+        status: error.response?.status,
       };
     }
   },

@@ -267,7 +267,7 @@ button:disabled {
 .landing-nav, .app-header { position: sticky; top: 0; z-index: 40; display: flex; align-items: center; justify-content: space-between; gap: 28px; min-height: 74px; padding: 0 clamp(20px, 5vw, 76px); border-bottom: 1px solid rgba(230,226,243,.85); background: rgba(255,255,255,.88); backdrop-filter: blur(18px); }
 .brand-lockup { display: inline-flex; align-items: center; gap: 10px; color: #28233e; font-size: 15px; font-weight: 750; letter-spacing: -.035em; text-decoration: none; white-space: nowrap; }
 .brand-lockup b { color: #7952e8; }
-.brand-mark { display: grid; width: 35px; height: 35px; place-items: center; border: 1px solid #eee6ff; border-radius: 12px; background: #f5efff; color: #7952e8; }
+.brand-mark { display: grid; width: 35px; height: 35px; place-items: center; overflow: hidden; border: 1px solid #eee6ff; border-radius: 12px; background: #fff; }.brand-mark img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .landing-links, .landing-actions, .hero-actions { display: flex; align-items: center; gap: 24px; }
 .landing-links a, .login-link { color: #69667e; font-size: 13px; font-weight: 600; text-decoration: none; }
 .landing-links a:hover, .login-link:hover { color: #7952e8; }
@@ -285,7 +285,7 @@ button:disabled {
 .landing-hero .hero-actions { justify-content: center; margin-top: 25px; gap: 12px; }
 .study-preview { display: grid; grid-template-columns: 180px 1fr; max-width: 1010px; min-height: 365px; margin: 53px auto 0; overflow: hidden; border: 1px solid #e8e4f1; border-radius: 21px; background: rgba(255,255,255,.94); box-shadow: 0 28px 75px rgba(71,54,120,.12); text-align: left; }
 .preview-sidebar { display: flex; flex-direction: column; gap: 10px; padding: 21px 13px; border-right: 1px solid #eeeaf5; background: #fcfbff; }
-.preview-logo { display: grid; width: 31px; height: 31px; margin: 0 0 9px 6px; place-items: center; border-radius: 10px; color: #7e4cdb; background: #f2eaff; }
+.preview-logo { display: grid; width: 31px; height: 31px; margin: 0 0 9px 6px; place-items: center; overflow: hidden; border-radius: 10px; background: #fff; }.preview-logo img { width: 100%; height: 100%; object-fit: cover; }
 .preview-nav { display: flex; align-items: center; gap: 9px; padding: 10px 9px; border-radius: 9px; color: #817d91; font-size: 11px; font-weight: 600; }
 .preview-nav.active { color: #764bd5; background: #f2ebff; }
 .preview-content { padding: 20px 25px 24px; }
