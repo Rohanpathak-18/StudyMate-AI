@@ -57,6 +57,12 @@ const DocumentUpload = ({ onUpload }) => {
       return;
     }
 
+    if (file.size === 0) {
+      setSelectedFile(null);
+      toast.error("This file is empty. Choose a document with content.");
+      return;
+    }
+
 
     if (
       file.size >

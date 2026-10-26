@@ -24,6 +24,13 @@ const uploadDocument = async (req, res, next) => {
       });
     }
 
+    if (!req.file.buffer?.length) {
+      return res.status(400).json({
+        success: false,
+        message: "The uploaded file is empty. Choose a document with content.",
+      });
+    }
+
     const filename = `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(req.file.originalname).toLowerCase()}`;
 
     console.log("");
@@ -377,6 +384,9 @@ const reindexDocument = async (req, res, next) => {
       : (document.filePath && fs.existsSync(document.filePath) ? document.filePath : null);
     if (!source) {
       return res.status(410).json({ success: false, message: "The saved file is no longer on the server. Please upload it again." });
+    }
+    if (Buffer.isBuffer(source) && source.length === 0) {
+      return res.status(400).json({ success: false, message: "The saved file is empty. Please upload the document again." });
     }
 
     document.status = "processing";

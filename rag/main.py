@@ -114,6 +114,11 @@ async def index_document(file: UploadFile = File(...)):
             raise FileNotFoundError(
                 "Temporary uploaded file was not created."
             )
+        if os.path.getsize(temp_file_path) == 0:
+            raise HTTPException(
+                status_code=400,
+                detail="The uploaded file is empty. Choose a document with content."
+            )
 
         # Process document
         result = process_document(
@@ -152,6 +157,9 @@ async def index_document(file: UploadFile = File(...)):
             "filename": original_filename,
             "chunk_count": result["chunk_count"]
         }
+
+    except HTTPException:
+        raise
 
     except Exception as error:
 
@@ -256,6 +264,12 @@ def chat(request: ChatRequest):
         )
 
         return result
+
+    except FileNotFoundError as error:
+        raise HTTPException(
+            status_code=409,
+            detail="No indexed study material is available. Upload a non-empty document first."
+        ) from error
 
     except Exception as error:
 
