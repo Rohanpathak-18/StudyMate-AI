@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 const CONTACT_EMAIL = "rohanpathak9813@gmail.com";
 const CONTACT_PHONE = "6392129011";
 
-const ContactFooter = () => {
+const ContactFooter = ({ showContactForm = true }) => {
   const handleContactSubmit = (event) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -18,7 +18,7 @@ const ContactFooter = () => {
 
   return (
     <footer className="landing-footer" id="contact">
-      <div className="landing-footer-content">
+      <div className={`landing-footer-content${showContactForm ? "" : " footer-no-form"}`}>
         <div className="footer-contact-info">
           <div className="footer-brand">
             <Link to="/" className="brand-lockup">
@@ -39,23 +39,25 @@ const ContactFooter = () => {
             <Link to="/register">Get started</Link>
           </nav>
         </div>
-        <form className="footer-contact-form" onSubmit={handleContactSubmit}>
-          <h2>Send us a message</h2>
-          <label>
-            Your name
-            <input name="name" type="text" autoComplete="name" placeholder="Name" required />
-          </label>
-          <label>
-            Your email
-            <input name="email" type="email" autoComplete="email" placeholder="you@example.com" required />
-          </label>
-          <label>
-            Message
-            <textarea name="message" rows="4" placeholder="How can we help?" required />
-          </label>
-          <button className="button-primary" type="submit">Send message <ArrowRight size={16} /></button>
-          <p>Your email app will open with your message ready to send.</p>
-        </form>
+        {showContactForm && (
+          <form className="footer-contact-form" onSubmit={handleContactSubmit}>
+            <h2>Send us a message</h2>
+            <label>
+              Your name
+              <input name="name" type="text" autoComplete="name" placeholder="Name" required />
+            </label>
+            <label>
+              Your email
+              <input name="email" type="email" autoComplete="email" placeholder="you@example.com" required />
+            </label>
+            <label>
+              Message
+              <textarea name="message" rows="4" placeholder="How can we help?" required />
+            </label>
+            <button className="button-primary" type="submit">Send message <ArrowRight size={16} /></button>
+            <p>Your email app will open with your message ready to send.</p>
+          </form>
+        )}
       </div>
       <div className="footer-bottom">
         <span>© {new Date().getFullYear()} StudyMate AI</span>

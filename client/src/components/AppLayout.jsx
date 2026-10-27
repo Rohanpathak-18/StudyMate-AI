@@ -7,7 +7,7 @@ import ContactFooter from "./ContactFooter";
 const AppLayout = () => {
   return (
     <div
-      className="
+      className="app-shell
         min-h-screen
         bg-[var(--bg)]
         text-[var(--text)]
@@ -17,7 +17,7 @@ const AppLayout = () => {
     >
       <Navbar />
       <main className="app-main"><Outlet /></main>
-      <ContactFooter />
+      <ContactFooter showContactForm={false} />
       <Sidebar />
     </div>
   );
